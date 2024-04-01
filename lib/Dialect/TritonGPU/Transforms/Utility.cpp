@@ -766,6 +766,7 @@ SmallVector<Value> delinearize(OpBuilder &b, Location loc, Value linear,
                                ArrayRef<unsigned> shape) {
   unsigned rank = shape.size();
   assert(rank > 0);
+  std::cout << "ccccccccccccccccccccccccccccccccccccccc\n";
   SmallVector<Value> multiDim(rank);
   if (rank == 1) {
     multiDim[0] = linear;

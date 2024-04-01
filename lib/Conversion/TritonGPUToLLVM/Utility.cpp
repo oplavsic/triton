@@ -319,6 +319,7 @@ SmallVector<Value> delinearize(RewriterBase &rewriter, Location loc,
                                Value linear, ArrayRef<unsigned> shape) {
   unsigned rank = shape.size();
   assert(rank > 0);
+  std::cout << "bbbbbbbbbbbbbbbbb\n";
   SmallVector<Value> multiDim(rank);
   Value remained = linear;
   for (auto &&en : llvm::enumerate(shape)) {
