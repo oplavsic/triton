@@ -72,6 +72,43 @@ struct DotOpMFMAConversionHelper {
     return rewriter.create(loweredOp)->getResult(0);
   }
 
+  // Value generateMFMAOp(StringRef mfmaInsnName, Value valA, Value valB,
+  //                      Value valC) const {
+  //   auto resType = valC.getType();
+  //   Value zeroFlag = i32_val(0);
+  //   if (mfmaInsnName == "rocdl.mfma.f32.16x16x16f16") {
+  //     int numElems = 4;
+  //     Value acc = valC;
+  //     for (int elemNo = 0; elemNo < numElems; ++elemNo) {
+  //       Value aElem = extract_element(f16_ty, valA, i32_val(elemNo));
+  //       aElem = fpext(f32_ty, aElem);
+
+  //       Value bElem = extract_element(f16_ty, valB, i32_val(elemNo));
+  //       bElem = fpext(f32_ty, bElem);
+
+  //       acc = generateMFMAOp("rocdl.mfma.f32.16x16x4f32", aElem, bElem, acc);
+  //     }
+  //     return acc;
+  //   } else if (mfmaInsnName == "rocdl.mfma.f32.32x32x8f16") {
+  //     int numElems = 4;
+  //     Value acc = valC;
+  //     for (int elemNo = 0; elemNo < numElems; ++elemNo) {
+  //       Value aElem = extract_element(f16_ty, valA, i32_val(elemNo));
+  //       aElem = fpext(f32_ty, aElem);
+
+  //       Value bElem = extract_element(f16_ty, valB, i32_val(elemNo));
+  //       bElem = fpext(f32_ty, bElem);
+
+  //       acc = generateMFMAOp("rocdl.mfma.f32.32x32x2f32", aElem, bElem, acc);
+  //     }
+  //     return acc;
+  //   } else {
+  //     OperationState loweredOp(loc, mfmaInsnName);
+  //     loweredOp.addTypes(resType);
+  //     loweredOp.addOperands({valA, valB, valC, zeroFlag, zeroFlag, zeroFlag});
+  //     return rewriter.create(loweredOp)->getResult(0);
+  //   }
+  // }
   int getNumSubmatrices(Type elementType, int mDim, int nDim) const {
     if (mDim == 64 && nDim == 4 || mDim == 4 && nDim == 64)
       return 1;

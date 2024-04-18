@@ -2028,8 +2028,8 @@ void DotOperandEncodingAttr::print(mlir::AsmPrinter &printer) const {
   auto mmaParent = getParent().dyn_cast<NvidiaMmaEncodingAttr>();
   printer << "<{"
           << "opIdx = " << getOpIdx() << ", parent = " << getParent();
-  if (mmaParent && mmaParent.isAmpere())
-    printer << ", kWidth = " << getKWidth();
+  // if (mmaParent && mmaParent.isAmpere())
+  printer << ", kWidth = " << getKWidth();
   printer << "}>";
 }
 

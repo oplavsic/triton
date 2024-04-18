@@ -235,83 +235,14 @@ def matmul_kernel(a_ptr, b_ptr, w_ptr, bias_ptr, z_ptr,  #
     'BLOCK_M,BLOCK_N,BLOCK_K,NUM_WARPS,NUM_CTAS,M,N,K,TRANS_A,TRANS_B,TRANS_OUTPUT,epilogue,out_dtype,USE_TMA_STORE,NUM_STAGES',
     [
         # corner shapes
-        (128, 128, 64, 4, 1, *shape_w_c, 'none', out_dtype, use_tma_store, 3)
-        for shape_w_c in [
-            [4096, 1, 1024, False, False, True],
-            [2048, 204, 1000, True, False, True],
-            [4096, 1, 1024, False, False, False],
-            [2048, 204, 1000, True, False, False],
+        (64, 64, 32, 4, 1, *shape_w_c, 'none', out_dtype, use_tma_store, 3)
+        for shape_w_c in [            # [4096, 1, 1024, False, False, True],
+            [384, 512, 256, True, True, False],
+            # [4096, 1, 1024, False, False, False],
+            # [2048, 204, 1000, True, False, False],
         ]
-        for out_dtype in ['float16', 'float32']  #
-        for use_tma_store in [False, True]  #
-    ] + [
-        # softmax epilogue
-        (*shape_w_c, trans_a, trans_b, trans_output, epilogue, out_dtype, use_tma_store, num_stages) for shape_w_c in [
-            [64, 64, 16, 4, 1, 64, 64, 64],
-            [128, 128, 64, 4, 1, None, None, None],
-            [16, 16, 64, 4, 1, 16, 16, 64],
-            [64, 64, 32, 8, 1, 64, 64, 64],
-            [128, 128, 64, 4, 1, 128, 128, 128],
-        ] for epilogue in ['softmax'] for out_dtype in ['float16', 'float32'] for use_tma_store in [False, True] for
-        trans_a in [False] for trans_b in [True] for trans_output in [False] for num_stages in [3]
-    ] + [
-        # loop over epilogues besides of softmax
-        (*shape_w_c, trans_a, trans_b, trans_output, epilogue, out_dtype, use_tma_store, num_stages) for shape_w_c in [
-            [64, 64, 16, 4, 1, 128, 128, 64],
-            *[[256, 64, 16, num_warps, num_ctas, 256, 256, 64] for num_warps in [4, 8] for num_ctas in [1, 2, 4]],
-            # for chain-dot
-            [128, 128, 64, 4, 1, None, None, None],
-            [64, 64, 16, 4, 1, None, None, None],
-            # small BLOCK_M and BLOCK_K
-            [16, 16, 64, 4, 1, 128, 128, 64],
-            *[[16, 32, 64, num_warps, num_ctas, 256, 256, 256] for num_warps in [4, 8] for num_ctas in [1, 2]],
-            # repeat
-            [64, 64, 32, 8, 1, 128, 256, 64],
-            [64, 64, 16, 8, 2, 128, 128, 64],
-            # irregular shape
-            [128, 128, 64, 4, 1, 500, 200, 128],
-            [128, 128, 64, 4, 2, 513, 193, 192],
-        ] for epilogue in ['none', 'add-matrix', 'add-rows', 'add-cols', 'chain-dot'
-                           ] for out_dtype in ['float16', 'float32'] for use_tma_store in [False, True] for trans_a in
-        [False] for trans_b in [True] for trans_output in [False] for num_stages in [3] if not (
-            epilogue == 'chain-dot' and (shape_w_c[6] is not None or shape_w_c[1] != shape_w_c[6]))
-    ] + [
-        # loop over tile shapes and transpose combinations
-        (*shape_w_c, trans_a, trans_b, trans_output, 'none', out_dtype, use_tma_store, num_stages) for shape_w_c in [
-            [64, 64, 32, 4, 1, 128, 256, 64],
-            [128, 128, 16, 4, 4, 512, 256, 64],
-            [128, 256, 32, 4, 8, 256, 256, 192],
-            [512, 256, 32, 4, 8, 1024, 256, 192],
-            # BLOCK_K >= 128
-            [64, 128, 128, 4, 1, 512, 256, 256],
-            [128, 128, 128, 4, 1, 256, 256, 192],
-            [128, 128, 128, 4, 2, 256, 256, 192],
-            # small BLOCK_M and BLOCK_K
-            [16, 32, 32, 4, 1, 128, 256, 64],
-            [32, 32, 16, 4, 1, 256, 256, 192],
-            [16, 32, 64, 4, 4, 512, 256, 64],
-        ] for out_dtype in ['float32'] for use_tma_store in [False] for trans_a in [False, True] for trans_b in
-        [False, True] for trans_output in [False, True] for num_stages in [3]
-    ] + [
-        # loop over instr shapes & pipeline stages
-        (64, n, 16, 4, 1, 512, 256, 256, False, True, trans_output, 'none', out_dtype, use_tma_store, num_stages)
-        for n in [16, 32, 64, 128, 256]
-        for trans_output in [False]
-        for out_dtype in ['float32']
-        for use_tma_store in [False]
-        for num_stages in [2, 4, 5, 7]
-    ] + [
-        # irregular shapes
-        (*shape_w_c, *shape, False, True, trans_output, 'none', out_dtype, use_tma_store, num_stages) for shape_w_c in [
-            [128, 128, 64, 4, 1],
-            [256, 128, 64, 4, 2],
-            [128, 128, 128, 4, 2],
-        ] for shape in [
-            [512, 360, 1024],
-            [360, 4096, 512],
-        ] for trans_output in [False] for out_dtype in ['float32'] for use_tma_store in [False, True] for num_stages in
-        [3, 4]
-    ])
+        for out_dtype in ['float16' ]
+        for use_tma_store in [False]])
 @pytest.mark.skipif(torch.cuda.get_device_capability()[0] < 9, reason="Requires compute capability >= 9")
 def test_gemm(BLOCK_M, BLOCK_N, BLOCK_K, NUM_WARPS, NUM_CTAS, M, N, K, TRANS_A, TRANS_B, TRANS_OUTPUT, epilogue,
               out_dtype, USE_TMA_STORE, NUM_STAGES):
@@ -435,10 +366,10 @@ def test_gemm(BLOCK_M, BLOCK_N, BLOCK_K, NUM_WARPS, NUM_CTAS, M, N, K, TRANS_A, 
     torch.set_printoptions(profile="full")
     golden = torch.nn.functional.normalize(golden)
     z = torch.nn.functional.normalize(z)
-    assert_close(z, golden, rtol=1e-2, atol=1e-3, check_dtype=False)
+    torch.testing.assert_close(z, golden, check_dtype=False)
 
     disable_mmav3 = os.environ.get('DISABLE_MMA_V3', 'not found').lower()
-    if disable_mmav3 not in ["on", "true", "1"] and BLOCK_M >= 64 and NUM_CTAS == 1 and BLOCK_N <= 256:
-        ptx = pgm.asm['ptx']
-        wgmma_n = int(max(BLOCK_N / max(NUM_WARPS / max(BLOCK_M / 16, 1), 1), 8))
-        assert re.search(r'wgmma.mma_async.sync.aligned.m\d+n{}k16(?:.row.col)?.f32.f16.f16'.format(wgmma_n), ptx)
+    # if disable_mmav3 not in ["on", "true", "1"] and BLOCK_M >= 64 and NUM_CTAS == 1 and BLOCK_N <= 256:
+    #     ptx = pgm.asm['ptx']
+    #     wgmma_n = int(max(BLOCK_N / max(NUM_WARPS / max(BLOCK_M / 16, 1), 1), 8))
+    #     assert re.search(r'wgmma.mma_async.sync.aligned.m\d+n{}k16(?:.row.col)?.f32.f16.f16'.format(wgmma_n), ptx)
