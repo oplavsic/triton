@@ -53,6 +53,7 @@ int getMfmaVersion(MatrixCoreVersion matrixCoreVer) {
 }
 
 static bool isTransposeChainDotPattern(tt::DotOp &dotOp) {
+  return true;
   auto filter = [&dotOp](Operation *op) {
     return op->getParentRegion() == dotOp->getParentRegion();
   };
@@ -91,7 +92,7 @@ SmallVector<unsigned, 2>
 warpsPerTile(tt::DotOp dotOp, const ArrayRef<int64_t> shape, int numWarps,
              SmallVector<int64_t, 2> shapePerWarp) {
   // TODO: needs to be updated with appropriate shapePerWarp etc.
-  if (isTransposeChainDotPattern(dotOp)) {
+  if (true) {
     return {(unsigned)numWarps, 1};
   }
 

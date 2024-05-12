@@ -195,8 +195,8 @@ static void amendLLVMFunc(llvm::Function *func, const NVVMMetadata &metadata,
       func->setCallingConv(llvm::CallingConv::AMDGPU_KERNEL);
       func->addFnAttr("amdgpu-flat-work-group-size",
                       "1, " + std::to_string(threadsPerCTA));
-      if (wavesPerEU > 0)
-        func->addFnAttr("amdgpu-waves-per-eu", std::to_string(wavesPerEU));
+      // if (wavesPerEU > 0)
+      func->addFnAttr("amdgpu-waves-per-eu", "2");
       func->addFnAttr("denormal-fp-math-f32", "preserve-sign");
       func->addFnAttr("amdgpu-unsafe-fp-atomics", "true");
       for (unsigned I = 0; I < func->arg_size(); ++I) {

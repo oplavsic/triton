@@ -1,6 +1,7 @@
 ﻿#include <mutex>
 #include <stack>
 #include <unordered_map>
+#include "mlir/Dialect/LLVMIR/ROCDLDialect.h"
 
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinOps.h"
@@ -562,7 +563,7 @@ void init_triton_ir(py::module &&m) {
         mlir::DialectRegistry registry;
         registry.insert<
             mlir::triton::TritonDialect, mlir::triton::gpu::TritonGPUDialect,
-            mlir::triton::nvidia_gpu::TritonNvidiaGPUDialect,
+            mlir::triton::nvidia_gpu::TritonNvidiaGPUDialect, mlir::ROCDL::ROCDLDialect,
             mlir::triton::nvgpu::NVGPUDialect, mlir::math::MathDialect,
             mlir::arith::ArithDialect, mlir::index::IndexDialect,
             mlir::scf::SCFDialect, mlir::cf::ControlFlowDialect,
