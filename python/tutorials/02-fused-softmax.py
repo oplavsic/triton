@@ -27,6 +27,8 @@ import triton
 import triton.language as tl
 from triton.runtime import driver
 
+def is_hip():
+    return triton.runtime.driver.active.get_current_target().backend == "hip"
 
 def naive_softmax(x):
     """Compute row-wise softmax of X using native pytorch
@@ -105,6 +107,10 @@ device = torch.cuda.current_device()
 properties = driver.active.utils.get_device_properties(device)
 NUM_SM = properties["multiprocessor_count"]
 NUM_REGS = properties["max_num_regs"]
+if is_hip():
+    NUM_REGS *= 2
+    MAX_NUM_THREADS = properties["max_threads_per_sm"]
+
 SIZE_SMEM = properties["max_shared_mem"]
 WARP_SIZE = properties["warpSize"]
 target = triton.runtime.driver.active.get_current_target()
@@ -137,8 +143,17 @@ def softmax(x):
         kernel._init_handles()
         n_regs = kernel.n_regs
         size_smem = kernel.metadata.shared
-        occupancy = NUM_REGS // (n_regs * WARP_SIZE * num_warps)
+        if is_hip():
+            # VGPRs are allocated out of two pools: regular VGPRs and accumulation VGPRs. Accumulation VGPRs are used
+            # with matrix VALU instructions, and can also be loaded directly from memory. A wave may have up to 512 total
+            # VGPRs, 256 of each type. When a wave has fewer than 512 total VGPRs, the number of each type is flexible - it is
+            # not required to be equal numbers of both types.
+            max_num_waves = MAX_NUM_THREADS // WARP_SIZE
+            occupancy = min(NUM_REGS // WARP_SIZE // n_regs, max_num_waves) // num_warps
+        else:
+            occupancy = NUM_REGS // (n_regs * WARP_SIZE * num_warps)
         occupancy = min(occupancy, SIZE_SMEM // size_smem)
+        print(occupancy)
         num_programs = NUM_SM * occupancy
         kernels[BLOCK_SIZE] = (kernel, num_programs)
 
