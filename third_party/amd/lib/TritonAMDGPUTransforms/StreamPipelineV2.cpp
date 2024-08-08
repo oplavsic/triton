@@ -128,7 +128,7 @@ getSharedEncIfAllUsersAreDotEnc(Value val) {
       if (!getSharedEncIfAllUsersAreDotEnc(user->getResult(0)).has_value())
         return std::nullopt;
     } else {
-      if (!isa<ttg::LocalLoadOp, ttg::ConvertLayoutOp>(user))
+      if (!isa<ttg::LocalLoadOp>(user))
         return std::nullopt;
       auto dotOpEnc = dyn_cast<ttg::DotOperandEncodingAttr>(
           cast<TensorOrMemDesc>(user->getResult(0).getType()).getEncoding());
@@ -492,8 +492,8 @@ createStreamOps(scf::ForOp &forOp, tt::CoarseSchedule &schedule,
   SmallVector<Value> allocs;
   SmallVector<std::pair<Operation *, Value>> loadToAllocs;
   for (auto &[loadOp, info] : loadToInfo) {
-    if (!info.sharedEncoding)
-      continue;
+    // if (!info.sharedEncoding)
+    //   continue;
 
     Value alloc = createAlloc(forOp, loadOp, info.sharedEncoding, numBuffers);
     assert(alloc && "Failed to create alloc for the async load.");
