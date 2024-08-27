@@ -35,7 +35,7 @@ def LLVM_PointerShared : LLVM_PointerInAddressSpace<3>;
 class AMDGPU_Op<string mnemonic, list<Trait> traits = []> :
     LLVM_OpBase<AMDGPU_Dialect, mnemonic, traits>;
 
-def AMDGPU_WGMMAFenceOp : AMDGPU_Op<"dummy_op", []> {
+def AMDGPU_DummyOp : AMDGPU_Op<"dummy_op", []> {
   let assemblyFormat = "attr-dict";
 }
 
