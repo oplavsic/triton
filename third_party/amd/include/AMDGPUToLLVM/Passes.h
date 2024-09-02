@@ -3,7 +3,7 @@
 
 #include "mlir/Dialect/LLVMIR/LLVMDialect.h"
 #include "mlir/Pass/Pass.h"
-#include "nvidia/include/AMDGPUToLLVM/AMDGPUToLLVMPass.h"
+#include "amd/include/AMDGPUToLLVM/AMDGPUToLLVMPass.h"
 
 namespace mlir {
 namespace triton {
