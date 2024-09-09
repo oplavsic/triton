@@ -1,5 +1,5 @@
-#include "Dialect/AMDGPU/IR/Dialect.h"
 #include "AMDGPUToLLVM/AMDGPUToLLVMPass.h"
+#include "Dialect/AMDGPU/IR/Dialect.h"
 #include "TritonAMDGPUToLLVM/Passes.h"
 #include "TritonAMDGPUToLLVM/TargetUtils.h"
 #include "TritonAMDGPUTransforms/Passes.h"

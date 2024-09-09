@@ -18,9 +18,7 @@ template <typename T> class OperationPass;
 
 namespace triton {
 
-namespace amdgpu {
-
-} // namespace amdgpu
+namespace amdgpu {} // namespace amdgpu
 
 std::unique_ptr<OperationPass<ModuleOp>> createConvertAMDGPUToLLVMPass();
 

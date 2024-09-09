@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 NVIDIA Corporation & Affiliates. All rights reserved.
+ * Copyright (c) 2024, Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files
@@ -24,14 +24,11 @@
 #ifndef TRITON_DIALECT_AMDGPU_IR_DIALECT_H_
 #define TRITON_DIALECT_AMDGPU_IR_DIALECT_H_
 
-// TritonGPU depends on Triton
-#include "triton/Dialect/Triton/IR/Dialect.h"
-
+#include "amd/include/Dialect/AMDGPU/IR/Dialect.h.inc"
 #include "mlir/Dialect/LLVMIR/LLVMDialect.h"
 #include "mlir/Dialect/Tensor/IR/Tensor.h"
 #include "mlir/IR/BuiltinOps.h"
 #include "mlir/IR/Dialect.h"
-#include "amd/include/Dialect/AMDGPU/IR/Dialect.h.inc"
 
 #define GET_ATTRDEF_CLASSES
 #include "amd/include/Dialect/AMDGPU/IR/AMDGPUAttrDefs.h.inc"

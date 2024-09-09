@@ -5,12 +5,12 @@ add_triton_library(AMDGPUToLLVM
     AMDGPUConversionPassIncGen
     AMDGPUIR
 
-    LINK_LIBS PUBLIC
-    MLIRIR
-    MLIRPass
-    TritonAnalysis
-    TritonIR
-    TritonGPUIR
-    TritonGPUTransforms
-    
+    # LINK_LIBS PUBLIC
+    # MLIRIR
+    # MLIRPass
+    # TritonAnalysis
+    # TritonIR
+    # TritonGPUIR
+    # TritonGPUTransforms
+
 )

@@ -7,14 +7,10 @@ include "mlir/Pass/PassBase.td"
 def ConvertAMDGPUToLLVM : Pass<"convert-amd-gpu-to-llvm", "mlir::ModuleOp"> {
     let summary = "Convert AMDGPU to LLVM";
     let description = [{
-
     }];
     let constructor = "mlir::triton::createConvertAMDGPUToLLVMPass()";
 
-    let dependentDialects = ["mlir::LLVM::LLVMDialect"
-                            //  "mlir::triton::TritonDialect",
-                             // "mlir::triton::amdgpu::AMDGPUDialect"
-                             ];
+    let dependentDialects = ["mlir::LLVM::LLVMDialect"];
 }
 
 #endif
