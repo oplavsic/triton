@@ -111,36 +111,37 @@ public:
     //    %2 = local_alloc
     //    %3 = local_store %1, %2
     //    %4 = local_load %2
-    m.walk([&](ttg::LocalLoadOp op) {
-      Operation *localLoad = (Operation *)op;
-      Operation *localAlloc = localLoad->getOperand(0).getDefiningOp();
+    m.walk([&](ttg::LocalLoadOp localLoad) {
+      auto localAlloc =
+          localLoad->getOperand(0).getDefiningOp<ttg::LocalAllocOp>();
+      if (!localAlloc || !localAlloc->hasOneUse())
+        return;
 
-      if (!localAlloc || !isa<ttg::LocalAllocOp>(localAlloc)) {
+      // Case when localAlloc has operands
+      if (localAlloc->getNumOperands() == 1) {
+        Operation *loadOp =
+            localAlloc->getOperand(0).getDefiningOp<tt::LoadOp>();
+        if (!loadOp) {
+          return;
+        }
+        localAlloc->moveAfter(loadOp);
+        localLoad->moveAfter(localAlloc);
         return;
       }
 
       // Case when localAlloc has no operands
-      if (localAlloc->getNumOperands() < 1) {
-        Operation *localStore = getFirstUse(localAlloc);
-        assert(localStore && "localAlloc has no use");
-
-        // Check if the use is a LocalStoreOp
-        if (isa<ttg::LocalStoreOp>(localStore)) {
-          Operation *loadOp = localStore->getOperand(0).getDefiningOp();
-
-          if (isa<tt::LoadOp>(loadOp)) {
-            localAlloc->moveAfter(loadOp);
-            localStore->moveAfter(localAlloc);
-            localLoad->moveAfter(localStore);
-          }
-        }
+      assert(localAlloc->getNumOperands() < 1);
+      Operation *localStore = getFirstUse(localAlloc);
+      if (!isa<ttg::LocalStoreOp>(localStore)) {
         return;
       }
-
-      // Case when localAlloc has operands
-      Operation *loadOp = localAlloc->getOperand(0).getDefiningOp();
+      Operation *loadOp = localStore->getOperand(0).getDefiningOp<tt::LoadOp>();
+      if (!loadOp) {
+        return;
+      }
       localAlloc->moveAfter(loadOp);
-      localLoad->moveAfter(localAlloc);
+      localStore->moveAfter(localAlloc);
+      localLoad->moveAfter(localStore);
     });
 
     // Sink conversion after the last dealloc but before the first use ancestor
