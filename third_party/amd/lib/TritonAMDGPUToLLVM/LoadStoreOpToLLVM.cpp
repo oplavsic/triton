@@ -157,7 +157,8 @@ struct LoadOpConversion : public ConvertOpToLLVMPattern<triton::LoadOp>,
     Type valueTy = op.getType();
     Type valueElemTy =
         typeConverter->convertType(getElementTypeOrSelf(valueTy));
-    unsigned vec = getVectorSize(ptr);
+    unsigned vec = 8; //getVectorSize(ptr);
+    llvm::outs() << vec << "\n";
     unsigned numElems = getTotalElemsPerThread(ptr.getType());
     if (llMask)
       vec = std::min<size_t>(vec, getMaskAlignment(mask));

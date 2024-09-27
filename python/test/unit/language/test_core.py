@@ -138,6 +138,17 @@ class MmaLayout:
     def __str__(self):
         return f"#{GPU_DIALECT}.nvidia_mma<{{versionMajor={self.version[0]}, versionMinor={self.version[1]}, warpsPerCTA={self.warps_per_cta}, CTAsPerCGA={self.ctas_per_cga}, CTASplitNum={self.cta_split_num}, CTAOrder={self.cta_order}, instrShape={self.instr_shape}}}>"
 
+#triton_gpu.dot_op<{opIdx = 0, parent = #mma, kWidth = 8}>
+class DotLayout:
+
+    def __init__(self, opIdx, mfma, kWidth):
+        self.opIdx = opIdx
+        self.mfma = mfma
+        print(str(mfma))
+        self.kWidth = kWidth
+
+    def __str__(self):
+        return f"#{GPU_DIALECT}.dot_op<{{opIdx={self.opIdx}, parent={str(self.mfma)}, kWidth={self.kWidth}}}>"
 
 class BlockedLayout:
 
@@ -2764,6 +2775,214 @@ def test_store_op(M, src_layout, device):
     y_ref = x
     np.testing.assert_allclose(y_ref, y_tri.cpu().numpy(), rtol=0.01, atol=1e-3)
 
+# layouts = [
+#     # BlockedLayout([1, 4], [1, THREADS_PER_WARP], [4, 1], [1, 0], [1, 1], [1, 1], [0, 1]),
+#     # MfmaLayout(version=(3, 0), warps_per_cta=[1, 8], instr_shape=[32, 32], is_transposed=False)
+#     DotLayout(opIdx=1, mfma=str(MfmaLayout(version=(3, 0), warps_per_cta=[1, 8], instr_shape=[32, 32], is_transposed=False)), kWidth=8)
+# ]
+# @pytest.mark.parametrize("M", [32])
+# @pytest.mark.parametrize("N", [32])
+# @pytest.mark.parametrize("src_layout", layouts)
+# def test_load_op(M, N, src_layout, device):
+
+#     ir = f"""
+#     #src = {src_layout}
+#     module attributes {{"{GPU_DIALECT}.num-warps" = 8 : i32, "{GPU_DIALECT}.num-ctas" = 1 : i32, "{GPU_DIALECT}.threads-per-warp" = {THREADS_PER_WARP} : i32}} {{
+#         tt.func public @kernel(%arg0: !tt.ptr<f32> {{tt.divisibility = 16 : i32}}, %arg1: !tt.ptr<i32> {{tt.divisibility = 16 : i32}}) {{
+#             %cst = arith.constant dense<{N}> : tensor<{M}x1xi32, #src>
+#             %0 = tt.make_range {{end = {M} : i32, start = 0 : i32}} : tensor<{M}xi32, #{GPU_DIALECT}.slice<{{dim = 1, parent = #src}}>>
+#             %1 = tt.expand_dims %0 {{axis = 1 : i32}} : tensor<{M}xi32, #{GPU_DIALECT}.slice<{{dim = 1, parent = #src}}>> -> tensor<{M}x1xi32, #src>
+#             %2 = arith.muli %1, %cst : tensor<{M}x1xi32, #src>
+#             %3 = tt.make_range {{end = {N} : i32, start = 0 : i32}} : tensor<{N}xi32, #{GPU_DIALECT}.slice<{{dim = 0, parent = #src}}>>
+#             %4 = tt.expand_dims %3 {{axis = 0 : i32}} : tensor<{N}xi32, #{GPU_DIALECT}.slice<{{dim = 0, parent = #src}}>> -> tensor<1x{N}xi32, #src>
+#             %5 = tt.broadcast %2 : tensor<{M}x1xi32, #src> -> tensor<{M}x{N}xi32, #src>
+#             %6 = tt.broadcast %4 : tensor<1x{N}xi32, #src> -> tensor<{M}x{N}xi32, #src>
+#             %7 = arith.addi %5, %6 : tensor<{M}x{N}xi32, #src>
+#             tt.print " x: " {{hex = false, isSigned = array<i32: 1>}} : %7 : tensor<{M}x{N}xi32, #src>
+#             %8 = tt.splat %arg0 : !tt.ptr<f32> -> tensor<{M}x{N}x!tt.ptr<f32>, #src>
+#             %9 = tt.addptr %8, %7 : tensor<{M}x{N}x!tt.ptr<f32>, #src>, tensor<{M}x{N}xi32, #src>
+#             %10 = tt.load %9 : tensor<{M}x{N}x!tt.ptr<f32>, #src>
+#             %11 = tt.splat %arg1 : !tt.ptr<i32> -> tensor<{M}x{N}x!tt.ptr<i32>, #src>
+#             %12 = tt.addptr %11, %7 : tensor<{M}x{N}x!tt.ptr<i32>, #src>, tensor<{M}x{N}xi32, #src>
+#             tt.store %12, %7 : tensor<{M}x{N}x!tt.ptr<i32>, #src>
+#             tt.return
+#         }}
+#     }}
+#     """
+
+#     with tempfile.NamedTemporaryFile(mode='w', suffix='.ttgir') as f:
+#         print(ir)
+#         f.write(ir)
+#         f.flush()
+#         store_kernel = triton.compile(f.name)
+
+#     rs = RandomState(17)
+#     x = rs.randint(0, 20, (M, N)).astype('float32')
+#     y = np.zeros((M, N), dtype='int32')
+#     x_tri = torch.tensor(x, device=device)
+#     y_tri = torch.tensor(y, device=device)
+
+#     pgm = store_kernel[(1, 1, 1)](x_tri, y_tri)
+#     y_ref = x
+
+#     np.set_printoptions(threshold=np.inf)
+
+#     print(y_tri.cpu().numpy())
+#     # np.testing.assert_allclose(y_ref, y_tri.cpu().numpy(), rtol=0.01, atol=1e-3)
+
+
+# layouts = [
+#     # BlockedLayout([1, 4], [1, THREADS_PER_WARP], [4, 1], [1, 0], [1, 1], [1, 1], [0, 1]),
+#     DotLayout(opIdx=1, mfma=str(MfmaLayout(version=(3, 0), warps_per_cta=[1, 8], instr_shape=[32, 32], is_transposed=False)), kWidth=8)
+# ]
+# @pytest.mark.parametrize("M", [64])
+# @pytest.mark.parametrize("N", [64])
+# @pytest.mark.parametrize("src_layout", layouts)
+# def test_load_op(M, N, src_layout, device):
+
+#     ir = f"""
+#     #src = {src_layout}
+#     module attributes {{"{GPU_DIALECT}.num-warps" = 8 : i32, "{GPU_DIALECT}.num-ctas" = 1 : i32, "{GPU_DIALECT}.threads-per-warp" = {THREADS_PER_WARP} : i32}} {{
+#         tt.func public @kernel(%arg0: !tt.ptr<f32> {{tt.divisibility = 16 : i32}}, %arg1: !tt.ptr<i32> {{tt.divisibility = 16 : i32}}) {{
+#             %cst = arith.constant dense<{N}> : tensor<{M}x1xi32, #src>
+#             %0 = tt.make_range {{end = {M} : i32, start = 0 : i32}} : tensor<{M}xi32, #{GPU_DIALECT}.slice<{{dim = 1, parent = #src}}>>
+#             %1 = tt.expand_dims %0 {{axis = 1 : i32}} : tensor<{M}xi32, #{GPU_DIALECT}.slice<{{dim = 1, parent = #src}}>> -> tensor<{M}x1xi32, #src>
+#             %2 = arith.muli %1, %cst : tensor<{M}x1xi32, #src>
+#             %3 = tt.make_range {{end = {N} : i32, start = 0 : i32}} : tensor<{N}xi32, #{GPU_DIALECT}.slice<{{dim = 0, parent = #src}}>>
+#             %4 = tt.expand_dims %3 {{axis = 0 : i32}} : tensor<{N}xi32, #{GPU_DIALECT}.slice<{{dim = 0, parent = #src}}>> -> tensor<1x{N}xi32, #src>
+#             %5 = tt.broadcast %2 : tensor<{M}x1xi32, #src> -> tensor<{M}x{N}xi32, #src>
+#             %6 = tt.broadcast %4 : tensor<1x{N}xi32, #src> -> tensor<{M}x{N}xi32, #src>
+#             %7 = arith.addi %5, %6 : tensor<{M}x{N}xi32, #src>
+#             %8 = tt.splat %arg0 : !tt.ptr<f32> -> tensor<{M}x{N}x!tt.ptr<f32>, #src>
+#             %9 = tt.addptr %8, %7 : tensor<{M}x{N}x!tt.ptr<f32>, #src>, tensor<{M}x{N}xi32, #src>
+#             %10 = tt.load %9 : tensor<{M}x{N}x!tt.ptr<f32>, #src>
+#             %11 = tt.splat %arg1 : !tt.ptr<i32> -> tensor<{M}x{N}x!tt.ptr<i32>, #src>
+#             %12 = tt.addptr %11, %7 : tensor<{M}x{N}x!tt.ptr<i32>, #src>, tensor<{M}x{N}xi32, #src>
+#             tt.store %12, %7 : tensor<{M}x{N}x!tt.ptr<i32>, #src>
+#             tt.return
+#         }}
+#     }}
+#     """
+
+#     with tempfile.NamedTemporaryFile(mode='w', suffix='.ttgir') as f:
+#         print(ir)
+#         f.write(ir)
+#         f.flush()
+#         store_kernel = triton.compile(f.name)
+
+#     rs = RandomState(17)
+#     x = rs.randint(0, 20, (M, N)).astype('float32')
+#     y = np.zeros((M, N), dtype='int32')
+#     x_tri = torch.tensor(x, device=device)
+#     y_tri = torch.tensor(y, device=device)
+
+#     pgm = store_kernel[(1, 1, 1)](x_tri, y_tri)
+#     y_ref = x
+
+#     np.set_printoptions(threshold=np.inf)
+
+#     print(y_tri.cpu().numpy())
+#     # np.testing.assert_allclose(y_ref, y_tri.cpu().numpy(), rtol=0.01, atol=1e-3)
+
+
+# layouts = [
+#     # BlockedLayout([1, 4], [1, THREADS_PER_WARP], [4, 1], [1, 0], [1, 1], [1, 1], [0, 1]),
+#     DotLayout(opIdx=1, mfma=str(MfmaLayout(version=(3, 0), warps_per_cta=[1, 8], instr_shape=[32, 32], is_transposed=False)), kWidth=8)
+# ]
+# @pytest.mark.parametrize("M", [64])
+# @pytest.mark.parametrize("N", [64])
+# @pytest.mark.parametrize("src_layout", layouts)
+# def test_load_op(M, N, src_layout, device):
+
+#     ir = f"""
+#     #src = {src_layout}
+#     module attributes {{"{GPU_DIALECT}.num-warps" = 8 : i32, "{GPU_DIALECT}.num-ctas" = 1 : i32, "{GPU_DIALECT}.threads-per-warp" = {THREADS_PER_WARP} : i32}} {{
+#         tt.func public @kernel(%arg0: !tt.ptr<f32> {{tt.divisibility = 16 : i32}}, %arg1: !tt.ptr<f32> {{tt.divisibility = 16 : i32}}) {{
+#             %cst = arith.constant dense<{N}> : tensor<{M}x1xi32, #src>
+#             %0 = tt.make_range {{end = {M} : i32, start = 0 : i32}} : tensor<{M}xi32, #{GPU_DIALECT}.slice<{{dim = 1, parent = #src}}>>
+#             %1 = tt.expand_dims %0 {{axis = 1 : i32}} : tensor<{M}xi32, #{GPU_DIALECT}.slice<{{dim = 1, parent = #src}}>> -> tensor<{M}x1xi32, #src>
+#             %2 = arith.muli %1, %cst : tensor<{M}x1xi32, #src>
+#             %3 = tt.make_range {{end = {N} : i32, start = 0 : i32}} : tensor<{N}xi32, #{GPU_DIALECT}.slice<{{dim = 0, parent = #src}}>>
+#             %4 = tt.expand_dims %3 {{axis = 0 : i32}} : tensor<{N}xi32, #{GPU_DIALECT}.slice<{{dim = 0, parent = #src}}>> -> tensor<1x{N}xi32, #src>
+#             %5 = tt.broadcast %2 : tensor<{M}x1xi32, #src> -> tensor<{M}x{N}xi32, #src>
+#             %6 = tt.broadcast %4 : tensor<1x{N}xi32, #src> -> tensor<{M}x{N}xi32, #src>
+#             %7 = arith.addi %5, %6 : tensor<{M}x{N}xi32, #src>
+#             %8 = tt.splat %arg0 : !tt.ptr<f32> -> tensor<{M}x{N}x!tt.ptr<f32>, #src>
+#             %9 = tt.addptr %8, %7 : tensor<{M}x{N}x!tt.ptr<f32>, #src>, tensor<{M}x{N}xi32, #src>
+#             %10 = tt.load %9 : tensor<{M}x{N}x!tt.ptr<f32>, #src>
+#             %11 = tt.splat %arg1 : !tt.ptr<f32> -> tensor<{M}x{N}x!tt.ptr<f32>, #src>
+#             %12 = tt.addptr %11, %7 : tensor<{M}x{N}x!tt.ptr<f32>, #src>, tensor<{M}x{N}xi32, #src>
+#             tt.store %12, %10 : tensor<{M}x{N}x!tt.ptr<f32>, #src>
+#             tt.return
+#         }}
+#     }}
+#     """
+
+#     with tempfile.NamedTemporaryFile(mode='w', suffix='.ttgir') as f:
+#         print(ir)
+#         f.write(ir)
+#         f.flush()
+#         store_kernel = triton.compile(f.name)
+
+#     rs = RandomState(17)
+#     x = rs.randint(0, 20, (M, N)).astype('float32')
+#     y = np.zeros((M, N), dtype='float32')
+#     x_tri = torch.tensor(x, device=device)
+#     y_tri = torch.tensor(y, device=device)
+
+#     pgm = store_kernel[(1, 1, 1)](x_tri, y_tri)
+#     y_ref = x
+#     np.testing.assert_allclose(y_ref, y_tri.cpu().numpy(), rtol=0.01, atol=1e-3)
+
+# layouts = [
+#     BlockedLayout([1, 4], [1, THREADS_PER_WARP], [4, 1], [1, 0], [1, 1], [1, 1], [0, 1]),
+#     # DotLayout(opIdx=1, mfma=str(MfmaLayout(version=(3, 0), warps_per_cta=[1, 8], instr_shape=[32, 32], is_transposed=False)), kWidth=8)
+# ]
+# @pytest.mark.parametrize("M", [256])
+# @pytest.mark.parametrize("N", [1])
+# @pytest.mark.parametrize("src_layout", layouts)
+# def test_load_op(M, N, src_layout, device):
+
+#     ir = f"""
+#     #src = {src_layout}
+#     module attributes {{"{GPU_DIALECT}.num-warps" = 8 : i32, "{GPU_DIALECT}.num-ctas" = 1 : i32, "{GPU_DIALECT}.threads-per-warp" = {THREADS_PER_WARP} : i32}} {{
+#         tt.func public @kernel(%arg0: !tt.ptr<f32> {{tt.divisibility = 16 : i32}}, %arg1: !tt.ptr<i32> {{tt.divisibility = 16 : i32}}) {{
+#             %0 = tt.make_range {{end = {M} : i32, start = 0 : i32}} : tensor<{M}xi32, #{GPU_DIALECT}.slice<{{dim = 1, parent = #src}}>>
+#             %1 = tt.splat %arg0 : !tt.ptr<f32> -> tensor<{M}x!tt.ptr<f32>, #{GPU_DIALECT}.slice<{{dim = 1, parent = #src}}>>
+#             %2 = tt.addptr %1, %0 : tensor<{M}x!tt.ptr<f32>, #{GPU_DIALECT}.slice<{{dim = 1, parent = #src}}>>, tensor<{M}xi32, #{GPU_DIALECT}.slice<{{dim = 1, parent = #src}}>>
+#             %3 = tt.load %2 : tensor<{M}x!tt.ptr<f32>, #{GPU_DIALECT}.slice<{{dim = 1, parent = #src}}>>
+#             %4 = tt.expand_dims %3 {{axis = 1 : i32}} : tensor<{M}xf32, #{GPU_DIALECT}.slice<{{dim = 1, parent = #src}}>> -> tensor<{M}x1xf32, #src>
+#             %5 = tt.make_range {{end = {M} : i32, start = 0 : i32}} : tensor<{M}xi32, #{GPU_DIALECT}.slice<{{dim = 1, parent = #src}}>>
+#             %6 = tt.expand_dims %5 {{axis = 1 : i32}} : tensor<{M}xi32, #{GPU_DIALECT}.slice<{{dim = 1, parent = #src}}>> -> tensor<{M}x1xi32, #src>
+#             %7 = tt.splat %arg1 : !tt.ptr<i32> -> tensor<{M}x1x!tt.ptr<i32>, #src>
+#             %8 = tt.addptr %7, %6 : tensor<{M}x1x!tt.ptr<f32>, #src>, tensor<{M}x1xi32, #src>
+#             tt.store %8, %6 : tensor<{M}x1x!tt.ptr<i32>, #src>
+#             tt.return
+#         }}
+#     }}
+#     """
+
+#     with tempfile.NamedTemporaryFile(mode='w', suffix='.ttgir') as f:
+#         print(ir)
+#         f.write(ir)
+#         f.flush()
+#         store_kernel = triton.compile(f.name)
+
+#     rs = RandomState(17)
+
+#     x = rs.randint(0, 20, (M, N)).astype('float32')
+#     y = np.zeros((M, N), dtype='int32')
+#     x_tri = torch.tensor(x, device=device)
+#     y_tri = torch.tensor(y, device=device)
+
+#     pgm = store_kernel[(1, 1, 1)](x_tri, y_tri)
+#     y_ref = x
+
+#     np.set_printoptions(threshold=np.inf)
+
+#     print(y_tri.cpu().numpy())
+#     # np.testing.assert_allclose(y_ref, y_tri.cpu().numpy(), rtol=0.01, atol=1e-3)
+
 
 layouts = [
     # TODO (lixun): Add MfmaLayout
@@ -3071,28 +3290,26 @@ def convert_fp8_to_fp32(x, device, dtype_str):
 @pytest.mark.interpreter
 @pytest.mark.parametrize(
     "M, N, K, num_warps, col_a, col_b, epilogue, input_precision, in_dtype, out_dtype, kpack",
-    [(*shape, 4, False, False, epilogue, input_precision, in_dtype, out_dtype, 1)
-     for shape in [(64, 64, 64), (32, 32, 32), (16, 16, 16)]
-     for epilogue in ['none', 'trans', 'add-matrix', 'add-rows', 'add-cols', 'softmax', 'chain-dot']
+    [(*shape, 8, False, True, epilogue, input_precision, in_dtype, out_dtype, 2)
+     for shape in [(128, 256, 256)]
+     for epilogue in ['none']
      for input_precision in ['tf32', 'tf32x3', 'ieee']
-     for in_dtype, out_dtype in [('float16', 'float16'), ('float16', 'float32'), ('float32', 'float32')]
-     if not (input_precision != 'ieee' and (in_dtype in ['float16']))] +
-    [(*shape_nw, col_a, col_b, 'none', input_precision, in_dtype, out_dtype, kpack)
-     for shape_nw in [[128, 256, 32, 8], [128, 16, 32, 4], [32, 128, 64, 4], [128, 128, 64, 4], [64, 128, 128, 4],
-                      [32, 128, 64, 2], [64, 64, 32, 4], [32, 32, 128, 16], [128, 128, 64, 2], [64, 128, 128, 2]]
-     for input_precision in ["tf32" if is_cuda() else "ieee"]
-     for col_a in [True, False]
-     for col_b in [True, False]
-     for in_dtype, out_dtype in [('int8', 'int8'), ('float16', 'float16'), ('float16', 'float32'), ('float32',
-                                                                                                    'float32')]
-     for kpack in [1, 2 if is_hip() else 1]] + [(64, 64, 64, 4, col_a, col_b, 'none', 'ieee', 'float32', 'float32', 1)
-                                                for col_a in [True, False]
-                                                for col_b in [True, False]] +
-    [(64, 64, 64, 4, False, False, 'chain-dot', 'ieee', 'bfloat16', 'float32', 1)] +
-    ([(16, 16, 8, 4, False, False, 'None', 'ieee', 'float32', 'float32', 1),
-      (32, 16, 8, 4, False, False, 'None', 'ieee', 'float16', 'float16', 1)] if "gfx9" in get_arch() else []) +
-    [(128, 128, 64, 4, False, False, 'chain-dot', 'ieee', float8_type, 'float32', 1)
-     for float8_type in ["float8e5", "float8e4nv"]])
+     for in_dtype, out_dtype in [('float16', 'float16')]
+     if not (input_precision != 'ieee' and (in_dtype in ['float16']))])
+    # [(*shape_nw, col_a, col_b, 'none', input_precision, in_dtype, out_dtype, kpack)
+    #  for shape_nw in [[128, 256, 32, 8], [128, 16, 32, 4], [32, 128, 64, 4], [128, 128, 64, 4], [64, 128, 128, 4],
+    #                   [32, 128, 64, 2], [64, 64, 32, 4], [32, 32, 128, 16], [128, 128, 64, 2], [64, 128, 128, 2]]
+    #  for input_precision in ["ieee" if is_hip() else "tf32"]
+    #  for col_a in [True, False]
+    #  for col_b in [True, False]
+    #  for in_dtype, out_dtype in [('int8', 'int8'), ('float16', 'float16'), ('float16', 'float32'), ('float32',
+    #                                                                                                 'float32')]
+    #  for kpack in [1, 2 if is_hip() else 1]] + [(64, 64, 64, 4, col_a, col_b, 'none', 'ieee', 'float32', 'float32', 1)
+    #                                             for col_a in [True, False]
+    #                                             for col_b in [True, False]] +
+    # [(64, 64, 64, 4, False, False, 'chain-dot', 'ieee', 'bfloat16', 'float32', 1)] +
+    # [(128, 128, 64, 4, False, False, 'chain-dot', 'ieee', float8_type, 'float32', 1)
+    #  for float8_type in ["float8e5", "float8e4nv"]])
 @pytest.mark.parametrize("num_ctas", num_ctas_list)
 def test_dot(M, N, K, num_warps, col_a, col_b, epilogue, input_precision, in_dtype, out_dtype, kpack, num_ctas, device):
     if is_interpreter():
@@ -3213,7 +3430,7 @@ def test_dot(M, N, K, num_warps, col_a, col_b, epilogue, input_precision, in_dty
         'COL_A': col_a, 'COL_B': col_b, 'BLOCK_M': M, 'BLOCK_K': K, 'BLOCK_N': N, 'ADD_MATRIX':
         epilogue == 'add-matrix', 'ADD_ROWS': epilogue == 'add-rows', 'ADD_COLS': epilogue == 'add-cols', 'DO_SOFTMAX':
         epilogue == 'softmax', 'CHAIN_DOT': epilogue == 'chain-dot', 'INPUT_PRECISION': input_precision, 'num_warps':
-        num_warps, 'num_ctas': num_ctas, 'out_dtype': out_dtype
+        num_warps, 'num_ctas': num_ctas, 'out_dtype': out_dtype, 'matrix_instr_nonkdim': 32
     }
 
     if is_hip():

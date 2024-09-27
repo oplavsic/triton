@@ -1,166 +1,90 @@
-#include "mlir/IR/Matchers.h"
-#include "mlir/IR/PatternMatch.h"
 #include "mlir/Pass/Pass.h"
 #include "mlir/Pass/PassManager.h"
-#include "mlir/Support/LogicalResult.h"
-#include "mlir/Transforms/GreedyPatternRewriteDriver.h"
 #include "mlir/Transforms/Passes.h"
+#include "triton/Analysis/Utility.h"
 #include "triton/Dialect/TritonGPU/IR/Dialect.h"
 #include "triton/Dialect/TritonGPU/Transforms/Passes.h"
+#include "triton/Dialect/TritonGPU/Transforms/TritonGPUConversion.h"
 #include "triton/Dialect/TritonGPU/Transforms/Utility.h"
-#include "mlir/Analysis/SliceAnalysis.h"
-#include "mlir/IR/Verifier.h"
+#define GEN_PASS_CLASSES
+#include "TritonAMDGPUTransforms/Passes.h"
 
 using namespace mlir;
 namespace ttg = triton::gpu;
 
-namespace {
+static Type getNewType(Type type, Attribute encoding) {
+  RankedTensorType tensorType = cast<RankedTensorType>(type);
+  return RankedTensorType::get(tensorType.getShape(),
+                               tensorType.getElementType(), encoding);
+}
 
-// // convert(val) : mma -> blocked
-// // tt.store(ptr, val, mask, ...) : blocked
-// // ==>
-// // convert(ptr) : blocked -> mma
-// // convert(mask) : blocked -> mma
-// // tt.store(ptr, val, mask, ...) : mma
-// //
-// // Store with mma layout directly
-
-// static Type getNewType(Type type, Attribute encoding) {
-//   RankedTensorType tensorType = type.cast<RankedTensorType>();
-//   return RankedTensorType::get(tensorType.getShape(),
-//                                tensorType.getElementType(), encoding);
-// }
-
-// void convertLayout(Attribute encoding, Operation *op) {
-//   OpBuilder builder(op);
-//   // Convert operands
-//   // For load/store with tensor pointers, we don't have to change the
-//   // operands' type, we do this by changing the outputs' type of
-//   // `make_tensor_ptr`
-//   SmallVector<Value, 4> newArgs;
-//   for (auto operand : op->getOperands()) {
-//     auto tensorType = operand.getType().dyn_cast<RankedTensorType>();
-//     if (tensorType &&
-//         !tensorType.getEncoding().isa<ttg::SharedEncodingAttr>()) {
-//       Type newType = getNewType(tensorType, encoding);
-//       newArgs.push_back(
-//           builder.create<ttg::ConvertLayoutOp>(op->getLoc(), newType, operand));
-//     } else {
-//       newArgs.push_back(operand);
-//     }
-//   }
-
-//   // Convert output types
-//   SmallVector<Type, 4> newTypes;
-//   for (auto t : op->getResultTypes()) {
-//     bool isAsync = isa<ttg::InsertSliceAsyncOp>(op);
-//     newTypes.push_back(isAsync ? t : getNewType(t, encoding));
-//   }
-
-//   // Construct new op with the new encoding
-//   Operation *newOp = builder.create(op->getLoc(), op->getName().getIdentifier(),
-//                                     newArgs, newTypes, op->getAttrs());
-
-//   // Cast the results back to the original layout
-//   for (size_t i = 0; i < op->getNumResults(); i++) {
-//     Value newResult = newOp->getResult(i);
-//     if (newTypes[i] != op->getResultTypes()[i]) {
-//       newResult = builder.create<ttg::ConvertLayoutOp>(
-//           op->getLoc(), op->getResult(i).getType(), newResult);
-//     }
-//     op->getResult(i).replaceAllUsesWith(newResult);
-//   }
-//   op->erase();
-// }
-
-// triton::LoadOp getLoadInst(Operation *op, ModuleOp &mod) {
-//   SmallVector<triton::LoadOp> loadOpsVec;
-
-//   mod.walk([&](triton::LoadOp loadOp) {
-//     SetVector<Operation *> forwardSlices;
-//     getForwardSlice((Operation *)loadOp, &forwardSlices);
-//     if (std::find(forwardSlices.begin(), forwardSlices.end(), op) !=
-//         forwardSlices.end()) {
-//       loadOpsVec.push_back(loadOp);
-//     }
-//   });
-
-//   // Currently, we expect the dot operand to depend only on one tensor
-//   // from global memory (applicable for dot ops that don't depend on other dot
-//   // ops). This condition can be lifted if necessary.
-//   assert(loadOpsVec.size() == 1);
-//   return loadOpsVec[0];
-// }
-
-class BypassLDSForDotLayout : public mlir::RewritePattern {
-
-public:
-  explicit BypassLDSForDotLayout(mlir::MLIRContext *context)
-      : mlir::RewritePattern(triton::gpu::ConvertLayoutOp::getOperationName(), 1, context) {}
-  mlir::LogicalResult
-  matchAndRewrite(mlir::Operation *op,
-                  mlir::PatternRewriter &rewriter) const override {
-
-    // auto cvtOp = dyn_cast<triton::gpu::ConvertLayoutOp>(op);
-    // auto mod = op->getParentOfType<ModuleOp>();
-    // static int counter = 0;
-    // if(counter > 0){
-    //   return mlir::failure();
-    // }
-    // if (!cvtOp)
-    //   return mlir::failure();
-
-    // auto srcType = cvtOp.getOperand().getType().cast<RankedTensorType>();
-    // auto dstType = cvtOp.getType().cast<RankedTensorType>();
-    // auto srcBlocked =
-    //     srcType.getEncoding().dyn_cast<triton::gpu::BlockedEncodingAttr>();
-    // auto dstDotOp =
-    //     dstType.getEncoding().dyn_cast<triton::gpu::DotOperandEncodingAttr>();
-    // if (!(srcBlocked && dstDotOp)) {
-    //   return mlir::failure();
-    // }
-
-    // if(dstDotOp.getOpIdx() != 0){
-    //   return mlir::failure();
-    // }
-
-    // if(srcBlocked.getOrder()[0] == 0){
-    //   return mlir::failure();
-    // }
-
-    // SmallVector<unsigned> newWarpsPerCTA(2, 4);
-    // SmallVector<unsigned> newSizePerThread(2, 4);
-    // SmallVector<unsigned> newThreadsPerWarp(2, 4);
-    // SmallVector<unsigned> newOrder(2, 4);
-    // newOrder[0] = 0;
-    // newOrder[1] = 1;
-    // newThreadsPerWarp[0] = 32;
-    // newThreadsPerWarp[1] = 2;
-    // newSizePerThread[0] = 1;
-    // newSizePerThread[1] = 8;
-    // newWarpsPerCTA[0] = 4;
-    // newWarpsPerCTA[1] = 1;
-    // auto newBlockedEncoding = triton::gpu::BlockedEncodingAttr::get(
-    //     mod.getContext(), newSizePerThread, newThreadsPerWarp, newWarpsPerCTA,
-    //     newOrder, srcBlocked.getCTALayout());
-
-    // auto loadInst = getLoadInst(cvtOp, mod);
-    // convertLayout(newBlockedEncoding, (Operation *)loadInst);
-    // if (failed(mlir::verify(mod))) {
-    //   assert(false);
-    // }
-    // counter+= 1;
-    return mlir::success();
+void convertLayout(Attribute encoding, Operation *op) {
+  OpBuilder builder(op);
+  // Convert operands
+  // For load/store with tensor pointers, we don't have to change the
+  // operands' type, we do this by changing the outputs' type of
+  // `make_tensor_ptr`
+  SmallVector<Value, 4> newArgs;
+  for (auto operand : op->getOperands()) {
+    auto tensorType = dyn_cast<RankedTensorType>(operand.getType());
+    if (tensorType &&
+        !isa<ttg::SharedEncodingAttr>(tensorType.getEncoding())) {
+      Type newType = getNewType(tensorType, encoding);
+      newArgs.push_back(builder.create<ttg::ConvertLayoutOp>(
+          op->getLoc(), newType, operand));
+    } else {
+      newArgs.push_back(operand);
+    }
   }
-};
 
-} // namespace
+  // Convert output types
+  SmallVector<Type, 4> newTypes;
+  for (auto t : op->getResultTypes()) {
+    bool isAsync = isa<ttg::AsyncCopyGlobalToLocalOp>(op);
+    newTypes.push_back(isAsync ? t : getNewType(t, encoding));
+  }
 
-#define GEN_PASS_CLASSES
-#include "triton/Dialect/TritonGPU/Transforms/Passes.h.inc"
+  // Construct new op with the new encoding
+  Operation *newOp = builder.create(op->getLoc(), op->getName().getIdentifier(),
+                                    newArgs, newTypes, op->getAttrs());
+
+  // Cast the results back to the original layout
+  for (size_t i = 0; i < op->getNumResults(); i++) {
+    Value newResult = newOp->getResult(i);
+    if (newTypes[i] != op->getResultTypes()[i]) {
+      newResult = builder.create<ttg::ConvertLayoutOp>(
+          op->getLoc(), op->getResult(i).getType(), newResult);
+    }
+    op->getResult(i).replaceAllUsesWith(newResult);
+  }
+  op->erase();
+}
+
+std::optional<triton::LoadOp> getLoadInst(Operation *op, ModuleOp &mod) {
+  SmallVector<triton::LoadOp> loadOpsVec;
+
+  mod.dump();
+  mod.walk([&](triton::LoadOp loadOp) {
+    SetVector<Operation *> forwardSlices;
+    getForwardSlice((Operation *)loadOp, &forwardSlices);
+    if (std::find(forwardSlices.begin(), forwardSlices.end(), op) !=
+        forwardSlices.end()) {
+      loadOp.dump();
+      loadOpsVec.push_back(loadOp);
+    }
+  });
+
+  assert(loadOpsVec.size() == 1);
+  if (loadOpsVec.empty()) {
+    return std::nullopt;
+  }
+  return loadOpsVec[0];
+}
+
 
 class TritonAMDGPUBypassLDSForDotLayoutPass
-    : public TritonAMDGPUBypassLDSForDotLayoutBase<TritonAMDGPUBypassLDSForDotLayoutPass> {
+    : public TritonAMDGPUBypassLDSForDotLayoutBase<
+          TritonAMDGPUBypassLDSForDotLayoutPass> {
 
 public:
   TritonAMDGPUBypassLDSForDotLayoutPass() = default;
@@ -168,14 +92,65 @@ public:
   void runOnOperation() override {
     MLIRContext *context = &getContext();
     ModuleOp m = getOperation();
+    std::vector<ttg::ConvertLayoutOp> cvtVec;
 
-    mlir::RewritePatternSet patterns(context);
+    m.walk([&](Operation *op) {
+      auto cvtOp = dyn_cast<ttg::ConvertLayoutOp>(op);
+      if (!cvtOp) {
+        return;
+      }
 
-    patterns.add<BypassLDSForDotLayout>(context);
+      auto srcType = cast<RankedTensorType>(cvtOp.getOperand().getType());
+      auto dstType = cast<RankedTensorType>(cvtOp.getType());
 
-    if (applyPatternsAndFoldGreedily(m, std::move(patterns)).failed()) {
-      signalPassFailure();
+      if (srcType.getShape().size() != 2) {
+        return;
+      }
+
+      auto srcBlocked =
+          dyn_cast<ttg::BlockedEncodingAttr>(srcType.getEncoding());
+      auto dstDotOp =
+          dyn_cast<ttg::DotOperandEncodingAttr>(dstType.getEncoding());
+
+      if (!(srcBlocked && dstDotOp)) {
+        return;
+      }
+
+      auto mfmaLayout = llvm::dyn_cast<ttg::AMDMfmaEncodingAttr>(
+          dstDotOp.getParent());
+      auto kWidth = dstDotOp.getKWidth();
+      auto warpsPerCTA = mfmaLayout.getWarpsPerCTA();
+
+      if (kWidth != 8 || warpsPerCTA[0] != 1) {
+        return;
+      }
+
+      if (dstDotOp.getOpIdx() != 1) {
+        return;
+      }
+
+      cvtVec.push_back(cvtOp);
+    });
+
+    assert(cvtVec.size() == 1);
+
+    auto convert = cvtVec[0];
+    auto loadInst = getLoadInst(convert, m);
+
+    if (!loadInst.has_value()) {
+      return;
     }
+
+    auto loadType =
+        dyn_cast<RankedTensorType>(loadInst.value().getResult().getType());
+    if (!loadType)
+      return;
+
+    auto dstType = cast<RankedTensorType>(convert.getType());
+    auto dstDotOp =
+        dyn_cast<ttg::DotOperandEncodingAttr>(dstType.getEncoding());
+
+    convertLayout(dstDotOp, (Operation *)loadInst.value());
   }
 };
 

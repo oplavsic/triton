@@ -109,7 +109,18 @@ def TritonAMDGPUCanonicalizePointers : Pass<"tritonamdgpu-canonicalize-pointers"
   let constructor = "mlir::createTritonAMDGPUCanonicalizePointersPass()";
 
   let dependentDialects = [];
+}
 
+def TritonAMDGPUBypassLDSForDotLayout: Pass<"tritonamdgpu-bypass-lds-for-dot-layout", "mlir::ModuleOp"> {
+  let summary = "Bypass moving data trough LDS for dot layout when possible";
+
+  let description = [{
+    Bypass moving data trough LDS for dot layout when possible.
+  }];
+
+  let constructor = "mlir::createTritonAMDGPUBypassLDSForDotLayout()";
+
+  let dependentDialects = [];
 }
 
 def TritonAMDGPUReorderInstructions: Pass<"tritonamdgpu-reorder-instructions", "mlir::ModuleOp"> {

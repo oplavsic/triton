@@ -717,9 +717,61 @@ SliceEncodingAttr::toLinearLayout(ArrayRef<int64_t> shape) const {
   return ret;
 }
 
-// TODO: DotOperandEncoding doesn't support LinearLayout conversion yet.
 std::optional<LinearLayout>
 DotOperandEncodingAttr::toLinearLayout(ArrayRef<int64_t> shape) const {
+
+  if (auto mfmaLayout = llvm::dyn_cast<AMDMfmaEncodingAttr>(getParent())) {
+
+    if (getOpIdx() == 0) {
+      return std::nullopt;
+    }
+
+    int rank = shape.size();
+    assert(rank == getWarpsPerCTA().size());
+
+    auto kWidth = getKWidth();
+    auto warpsPerCTA = mfmaLayout.getWarpsPerCTA();
+
+    if (kWidth != 8 || warpsPerCTA[0] != 1) {
+      return std::nullopt;
+    }
+
+    MLIRContext *ctx = getContext();
+    SmallVector<StringAttr> outDimNames = standardOutDimNames(ctx, rank);
+
+    StringAttr kRegister = S("register");
+    StringAttr kLane = S("lane");
+
+    SmallVector<unsigned> order = triton::gpu::getOrder(*this);
+    auto tileLayout = LinearLayout::empty();
+
+    if (mfmaLayout.getMDim() == 32) {
+      tileLayout = LinearLayout(
+          {{kRegister, {{1, 0}, {2, 0}, {4, 0}}},
+           {kLane, {{0, 1}, {0, 2}, {0, 4}, {0, 8}, {0, 16}, {8, 0}}}},
+          {outDimNames[order[1]], outDimNames[order[0]]});
+    } else {
+      assert(mfmaLayout.getMDim() == 16);
+      tileLayout = LinearLayout(
+          {{kRegister, {{1, 0}, {2, 0}, {4, 0}}},
+           {kLane, {{0, 1}, {0, 2}, {0, 4}, {0, 8}, {8, 0}, {16, 0}}}},
+          {outDimNames[order[1]], outDimNames[order[0]]});
+    }
+    LinearLayout warpLayout =
+        identityND(S("warp"), warpsPerCTA, {0, 1},
+                   {outDimNames[order[1]], outDimNames[order[0]]});
+    LinearLayout ctaLayout = tileLayout * warpLayout;
+
+    llvm::SmallDenseMap<StringAttr, int64_t> labeledShape;
+    for (auto [dim, size] : llvm::zip(outDimNames, shape)) {
+      labeledShape[dim] = size;
+    }
+
+    auto finalLay =
+        combineCtaCgaWithShape(ctaLayout, mfmaLayout.getCTALayout(), shape);
+    return finalLay;
+  }
+
   return std::nullopt;
 }
 
