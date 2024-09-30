@@ -633,11 +633,13 @@ public:
     auto newAType = RankedTensorType::get(
         aShape, operandTypes[0],
         ttg::DotOperandEncodingAttr::get(
-            ctx, 0, wmmaEnc, wmmaEnc.getSizePerThreadForOperands(0)[rank - 1]));
+            ctx, 0, wmmaEnc,
+            wmmaEnc.getSizePerThreadForOperands(0, 1)[rank - 1]));
     auto newBType = RankedTensorType::get(
         bShape, operandTypes[1],
         ttg::DotOperandEncodingAttr::get(
-            ctx, 1, wmmaEnc, wmmaEnc.getSizePerThreadForOperands(1)[rank - 2]));
+            ctx, 1, wmmaEnc,
+            wmmaEnc.getSizePerThreadForOperands(1, 1)[rank - 2]));
 
     Value castedA = convertAndCastTensor(rewriter, a, newAType.getEncoding(),
                                          operandTypes[0]);

@@ -176,7 +176,7 @@ Value convertLayout(int opIdx, ConversionPatternRewriter &rewriter,
   Value linearWaveId = udiv(thread, waveSize);
 
   unsigned numElemsPerThreadPerRep =
-      wmmaLayout.getSizePerThreadForOperands(opIdx)[kDimIdx];
+      wmmaLayout.getSizePerThreadForOperands(opIdx, kWidth)[kDimIdx];
 
   Value lane = urem(thread, waveSize);
   unsigned int maxNumWarps = shape[nonKDimIdx] / wmmaInstrNonK;
