@@ -36,12 +36,16 @@ int getWmmaVersion(StringRef archGen) {
   return 0;
 }
 
+//   return {1, (unsigned)numWarps};
+
 SmallVector<unsigned, 2> warpsPerTile(tt::DotOp dotOp,
                                       const ArrayRef<int64_t> shape,
                                       int numWarps,
                                       SmallVector<int64_t, 2> shapePerWarp) {
   auto rank = shape.size();
   // Early exit for batched matmul
+  return {1, (unsigned)numWarps};
+
   if (rank == 3)
     return {(unsigned)numWarps, 1, 1};
 

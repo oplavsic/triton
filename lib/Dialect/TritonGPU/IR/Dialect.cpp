@@ -1688,9 +1688,9 @@ unsigned AMDMfmaEncodingAttr::getTotalElemsPerThreadForOperands(
 SmallVector<unsigned>
 AMDMfmaEncodingAttr::getSizePerThreadForOperands(unsigned opIdx) const {
   if (opIdx == 0) {
-    return {4, 1};
-  } else if (opIdx == 1) {
     return {1, 4};
+  } else if (opIdx == 1) {
+    return {4, 1};
   } else {
     llvm::report_fatal_error("DotOperandEncodingAttr opIdx must be 0 or 1");
     return {};
@@ -2154,6 +2154,15 @@ SmallVector<unsigned> DotOperandEncodingAttr::getSizePerThread() const {
   auto parentLayout = getParent();
   assert(parentLayout && "DotOperandEncodingAttr must have a parent");
   if (auto parentMmaLayout = mlir::dyn_cast<MmaEncodingTrait>(parentLayout)) {
+    if (auto parentMfmaLayout =
+            mlir::dyn_cast<AMDMfmaEncodingAttr>(parentLayout)) {
+      auto kWidth = getKWidth();
+      if (getOpIdx() == 0) {
+        return {1, kWidth};
+      } else {
+        return {kWidth, 1};
+      }
+    }
     return parentMmaLayout.getSizePerThreadForOperands(getOpIdx());
   } else {
     llvm::report_fatal_error(
