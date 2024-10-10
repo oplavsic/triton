@@ -123,10 +123,10 @@ public:
       if (localAlloc->getNumOperands() == 1) {
         if (!localAlloc->hasOneUse())
           return;
-        auto loadOp = localAlloc->getOperand(0).getDefiningOp<tt::LoadOp>();
-        if (!loadOp)
-          return;
-        localAlloc->moveAfter(loadOp);
+        // auto loadOp = localAlloc->getOperand(0).getDefiningOp<tt::LoadOp>();
+        // if (!loadOp)
+        //   return;
+        localAlloc->moveAfter(localAlloc->getOperand(0).getDefiningOp());
         localLoad->moveAfter(localAlloc);
         return;
       }
@@ -145,10 +145,10 @@ public:
       if (!isa<ttg::LocalStoreOp>(localStore))
         return;
 
-      auto loadOp = localStore->getOperand(0).getDefiningOp<tt::LoadOp>();
-      if (!loadOp)
-        return;
-      localAlloc->moveAfter(loadOp);
+      // auto loadOp = localStore->getOperand(0).getDefiningOp<tt::LoadOp>();
+      // if (!loadOp)
+      //   return;
+      localAlloc->moveAfter(localStore->getOperand(0).getDefiningOp());
       localStore->moveAfter(localAlloc);
       localLoad->moveAfter(localStore);
     });
