@@ -1,0 +1,911 @@
+	.text
+	.amdgcn_target "amdgcn-amd-amdhsa--gfx942"
+	.amdhsa_code_object_version 4
+	.globl	matmul_kernel                   ; -- Begin function matmul_kernel
+	.p2align	8
+	.type	matmul_kernel,@function
+matmul_kernel:                          ; @matmul_kernel
+.Lfunc_begin0:
+	.cfi_sections .debug_frame
+	.cfi_startproc
+	s_trap 2 ; Kernarg preload header. Trap with incompatible firmware that doesn't support preloading kernel arguments.
+	.fill 63, 4, 0xbf800000 ; s_nop 0
+; %bb.0:
+	.file	1 "/AMD-triton/python/perf-kernels/tools/tune_gemm" "matmul_kernel.py"
+	.loc	1 21 27 prologue_end            ; matmul_kernel.py:21:27
+	s_ashr_i32 s0, s15, 31
+	s_lshr_b32 s0, s0, 29
+	s_add_i32 s1, s15, s0
+.Ltmp0:
+	.file	2 "/triton/python/triton/language" "standard.py"
+	.loc	2 40 22                         ; standard.py:40:22
+	s_add_i32 s0, s9, 0x7f
+	.loc	2 40 28 is_stmt 0               ; standard.py:40:28
+	s_ashr_i32 s14, s0, 31
+	s_lshr_b32 s14, s14, 25
+	s_add_i32 s0, s0, s14
+	s_ashr_i32 s0, s0, 7
+.Ltmp1:
+	.loc	1 26 23 is_stmt 1               ; matmul_kernel.py:26:23
+	s_abs_i32 s14, s0
+	v_cvt_f32_u32_e32 v1, s14
+	.loc	1 21 27                         ; matmul_kernel.py:21:27
+	s_ashr_i32 s1, s1, 3
+	.loc	1 26 23                         ; matmul_kernel.py:26:23
+	s_sub_i32 s18, 0, s14
+	.loc	1 23 35                         ; matmul_kernel.py:23:35
+	s_mul_i32 s15, s15, 38
+	.loc	1 26 23                         ; matmul_kernel.py:26:23
+	v_rcp_iflag_f32_e32 v1, v1
+	.loc	1 23 35                         ; matmul_kernel.py:23:35
+	s_mulk_i32 s1, 0xfed1
+	s_add_i32 s1, s1, s15
+	.loc	1 26 23                         ; matmul_kernel.py:26:23
+	s_abs_i32 s17, s1
+	v_mul_f32_e32 v1, 0x4f7ffffe, v1
+	v_cvt_u32_f32_e32 v1, v1
+	s_xor_b32 s15, s1, s0
+	s_ashr_i32 s15, s15, 31
+	s_mov_b32 s16, 0
+	v_readfirstlane_b32 s19, v1
+	s_mul_i32 s18, s18, s19
+	s_mul_hi_u32 s18, s19, s18
+	s_add_i32 s19, s19, s18
+	s_mul_hi_u32 s18, s17, s19
+	s_mul_i32 s19, s18, s14
+	s_sub_i32 s17, s17, s19
+	s_add_i32 s19, s18, 1
+	s_sub_i32 s20, s17, s14
+	s_cmp_ge_u32 s17, s14
+	s_cselect_b32 s18, s19, s18
+	s_cselect_b32 s17, s20, s17
+	s_add_i32 s19, s18, 1
+	s_cmp_ge_u32 s17, s14
+	s_cselect_b32 s14, s19, s18
+	s_xor_b32 s14, s14, s15
+	s_sub_i32 s22, s14, s15
+	.loc	1 40 23                         ; matmul_kernel.py:40:23
+	s_lshl_b32 s28, s22, 5
+	.loc	1 42 21                         ; matmul_kernel.py:42:21
+	s_mul_i32 s20, s28, s11
+	s_ashr_i32 s21, s20, 31
+	s_lshl_b64 s[14:15], s[20:21], 1
+	.loc	1 40 51                         ; matmul_kernel.py:40:51
+	v_lshrrev_b32_e32 v1, 4, v0
+	.loc	1 42 21                         ; matmul_kernel.py:42:21
+	s_add_u32 s14, s2, s14
+	v_mul_lo_u32 v40, s11, v1
+	s_addc_u32 s15, s3, s15
+	.loc	1 42 59 is_stmt 0               ; matmul_kernel.py:42:59
+	v_lshlrev_b32_e32 v53, 3, v0
+.Ltmp2:
+	.loc	2 40 22 is_stmt 1               ; standard.py:40:22
+	s_add_i32 s11, s10, 0x7f
+	s_mov_b32 s18, s16
+	s_mov_b32 s19, s16
+.Ltmp3:
+	.loc	1 42 21                         ; matmul_kernel.py:42:21
+	v_ashrrev_i32_e32 v41, 31, v40
+	.loc	1 42 59 is_stmt 0               ; matmul_kernel.py:42:59
+	v_and_b32_e32 v46, 0x78, v53
+	.loc	1 42 52                         ; matmul_kernel.py:42:52
+	v_mov_b32_e32 v47, 0
+	.loc	1 49 22 is_stmt 1               ; matmul_kernel.py:49:22
+	s_cmpk_gt_i32 s11, 0x7f
+	s_mov_b32 s17, s16
+	.loc	1 51 24                         ; matmul_kernel.py:51:24
+	v_mov_b64_e32 v[36:37], s[18:19]
+	.loc	1 42 52                         ; matmul_kernel.py:42:52
+	v_lshl_add_u64 v[42:43], v[40:41], 0, v[46:47]
+	.loc	1 49 22                         ; matmul_kernel.py:49:22
+	s_cselect_b64 s[26:27], -1, 0
+	s_cmpk_lt_i32 s11, 0x80
+	.loc	1 51 24                         ; matmul_kernel.py:51:24
+	v_mov_b64_e32 v[34:35], s[16:17]
+	s_cbranch_scc1 .LBB0_2
+; %bb.1:                                ; %cond.load
+	v_lshl_add_u64 v[2:3], v[42:43], 1, s[14:15]
+	global_load_dwordx4 v[34:37], v[2:3], off
+.LBB0_2:
+	.loc	1 27 22                         ; matmul_kernel.py:27:22
+	s_mul_i32 s22, s22, s0
+	s_sub_i32 s0, s1, s22
+	.loc	1 41 23                         ; matmul_kernel.py:41:23
+	s_lshl_b32 s10, s0, 7
+	.loc	1 37 30                         ; matmul_kernel.py:37:30
+	v_and_b32_e32 v48, 15, v0
+	v_lshrrev_b32_e32 v49, 2, v0
+	s_movk_i32 s0, 0x70
+	.loc	1 43 51                         ; matmul_kernel.py:43:51
+	s_mul_i32 s22, s10, s12
+	.loc	1 37 30                         ; matmul_kernel.py:37:30
+	v_and_or_b32 v2, v49, s0, v48
+	.loc	1 43 51                         ; matmul_kernel.py:43:51
+	s_ashr_i32 s23, s22, 31
+	.loc	1 43 28 is_stmt 0               ; matmul_kernel.py:43:28
+	v_lshrrev_b32_e32 v54, 1, v0
+	.loc	1 43 51                         ; matmul_kernel.py:43:51
+	v_mul_lo_u32 v44, s12, v2
+	s_lshl_b64 s[0:1], s[22:23], 1
+	.loc	1 43 28                         ; matmul_kernel.py:43:28
+	v_and_b32_e32 v46, 24, v54
+	.loc	1 43 51                         ; matmul_kernel.py:43:51
+	s_add_u32 s24, s4, s0
+	v_ashrrev_i32_e32 v45, 31, v44
+	.loc	1 52 24 is_stmt 1               ; matmul_kernel.py:52:24
+	v_cndmask_b32_e64 v2, 0, 1, s[26:27]
+	.loc	1 43 51                         ; matmul_kernel.py:43:51
+	s_addc_u32 s25, s5, s1
+	v_lshl_add_u64 v[18:19], v[44:45], 0, v[46:47]
+	.loc	1 52 24                         ; matmul_kernel.py:52:24
+	v_cmp_ne_u32_e64 s[0:1], 1, v2
+	v_mov_b64_e32 v[2:3], s[16:17]
+	v_lshl_add_u64 v[38:39], v[18:19], 1, s[24:25]
+	s_andn2_b64 vcc, exec, s[26:27]
+	v_mov_b64_e32 v[4:5], s[18:19]
+	s_cbranch_vccnz .LBB0_4
+; %bb.3:                                ; %cond.load53
+	global_load_dwordx4 v[2:5], v[38:39], off
+.LBB0_4:
+	.loc	1 0 24 is_stmt 0                ; matmul_kernel.py:0:24
+	s_mov_b32 s17, s16
+	s_mov_b32 s18, s16
+	s_mov_b32 s19, s16
+	.loc	1 52 24                         ; matmul_kernel.py:52:24
+	v_mov_b64_e32 v[6:7], s[16:17]
+	s_and_b64 vcc, exec, s[0:1]
+	v_mov_b64_e32 v[8:9], s[18:19]
+	s_cbranch_vccnz .LBB0_6
+; %bb.5:                                ; %cond.load56
+	global_load_dwordx4 v[6:9], v[38:39], off offset:64
+.LBB0_6:
+	v_mov_b64_e32 v[10:11], s[16:17]
+	s_and_b64 vcc, exec, s[0:1]
+	v_mov_b64_e32 v[12:13], s[18:19]
+	s_cbranch_vccnz .LBB0_8
+; %bb.7:                                ; %cond.load59
+	global_load_dwordx4 v[10:13], v[38:39], off offset:128
+.LBB0_8:
+	.loc	1 0 24                          ; matmul_kernel.py:0:24
+	s_mov_b32 s17, s16
+	s_mov_b32 s18, s16
+	s_mov_b32 s19, s16
+	.loc	1 52 24                         ; matmul_kernel.py:52:24
+	v_mov_b64_e32 v[14:15], s[16:17]
+	s_and_b64 vcc, exec, s[0:1]
+	v_mov_b64_e32 v[16:17], s[18:19]
+	s_cbranch_vccnz .LBB0_10
+; %bb.9:                                ; %cond.load62
+	global_load_dwordx4 v[14:17], v[38:39], off offset:192
+.LBB0_10:
+	.loc	1 58 18 is_stmt 1               ; matmul_kernel.py:58:18
+	s_add_u32 s16, s24, 0x100
+	s_addc_u32 s17, s25, 0
+	.loc	1 52 24                         ; matmul_kernel.py:52:24
+	v_lshl_add_u64 v[50:51], v[18:19], 1, s[16:17]
+	global_load_dwordx4 v[30:33], v[38:39], off offset:256
+	global_load_dwordx4 v[26:29], v[50:51], off offset:64
+	global_load_dwordx4 v[22:25], v[50:51], off offset:128
+	global_load_dwordx4 v[18:21], v[50:51], off offset:192
+	.loc	1 51 24                         ; matmul_kernel.py:51:24
+	v_xor_b32_e32 v38, v54, v53
+	v_and_b32_e32 v38, 0x78, v38
+	v_lshlrev_b32_e32 v38, 1, v38
+	v_lshl_or_b32 v1, v1, 8, v38
+	v_add_u32_e32 v47, 0, v1
+	.loc	1 43 28                         ; matmul_kernel.py:43:28
+	v_or_b32_e32 v52, 32, v46
+	v_or_b32_e32 v51, 64, v46
+	v_or_b32_e32 v50, 0x60, v46
+	s_mov_b64 s[16:17], 0x100
+	.loc	1 51 24                         ; matmul_kernel.py:51:24
+	s_waitcnt vmcnt(4)
+	ds_write_b128 v47, v[34:37]
+	.loc	1 49 22                         ; matmul_kernel.py:49:22
+	s_cmpk_lt_i32 s11, 0x180
+	v_mov_b32_e32 v37, 0
+	v_lshlrev_b32_e32 v53, 3, v48
+	v_lshlrev_b32_e32 v54, 7, v48
+	s_cbranch_scc1 .LBB0_14
+; %bb.11:                               ; %.lr.ph
+	.loc	1 0 22 is_stmt 0                ; matmul_kernel.py:0:22
+	v_xor_b32_e32 v1, v46, v53
+	v_or_b32_e32 v1, v1, v54
+	.loc	1 49 22                         ; matmul_kernel.py:49:22
+	v_and_b32_e32 v38, 48, v0
+	v_mov_b32_e32 v39, 0
+.Ltmp4:
+	.loc	2 40 28 is_stmt 1               ; standard.py:40:28
+	s_lshr_b32 s12, s11, 7
+	v_lshl_add_u32 v55, v1, 1, 0
+	s_mov_b32 s11, 0x7060302
+.Ltmp5:
+	.loc	1 49 22                         ; matmul_kernel.py:49:22
+	v_lshl_add_u64 v[0:1], s[22:23], 1, v[38:39]
+	v_lshlrev_b32_e32 v38, 4, v48
+	v_alignbit_b32 v68, v7, v6, 16
+	v_perm_b32 v79, v7, v9, s11
+	v_mov_b32_e32 v77, v6
+	v_lshl_add_u64 v[6:7], s[20:21], 1, v[38:39]
+	v_xor_b32_e32 v34, v52, v53
+	v_xor_b32_e32 v35, v51, v53
+	v_xor_b32_e32 v36, v50, v53
+	v_lshl_add_u64 v[6:7], v[40:41], 1, v[6:7]
+	v_or_b32_e32 v34, v34, v54
+	v_or_b32_e32 v35, v35, v54
+	v_or_b32_e32 v36, v36, v54
+	v_lshl_add_u64 v[0:1], v[44:45], 1, v[0:1]
+	v_lshl_add_u64 v[6:7], v[6:7], 0, s[2:3]
+	v_lshl_add_u32 v56, v34, 1, 0
+	v_lshl_add_u32 v57, v35, 1, 0
+	v_lshl_add_u32 v58, v36, 1, 0
+	v_alignbit_b32 v59, v17, v16, 16
+	v_alignbit_b32 v60, v15, v14, 16
+	v_alignbit_b32 v61, v13, v12, 16
+	v_alignbit_b32 v62, v11, v10, 16
+	v_alignbit_b32 v63, v9, v8, 16
+	v_alignbit_b32 v69, v5, v4, 16
+	v_alignbit_b32 v78, v3, v2, 16
+	v_perm_b32 v72, v15, v17, s11
+	v_perm_b32 v75, v11, v13, s11
+	v_mov_b32_e32 v70, v16
+	v_mov_b32_e32 v71, v14
+	v_perm_b32 v81, v3, v5, s11
+	v_mov_b32_e32 v73, v12
+	v_mov_b32_e32 v74, v10
+	v_mov_b32_e32 v76, v8
+	v_lshl_add_u64 v[0:1], s[4:5], 0, v[0:1]
+	v_lshl_add_u64 v[44:45], v[6:7], 0, s[16:17]
+	s_add_i32 s12, s12, -2
+	s_mov_b64 s[2:3], 0
+	s_mov_b32 s16, 0x5040100
+	v_mov_b32_e32 v80, v4
+	v_mov_b32_e32 v82, v2
+	v_mov_b32_e32 v38, v39
+	v_mov_b32_e32 v40, v39
+	v_mov_b32_e32 v41, v39
+	v_mov_b32_e32 v34, v39
+	v_mov_b32_e32 v35, v39
+	v_mov_b32_e32 v36, v39
+	v_mov_b32_e32 v37, v39
+	s_waitcnt vmcnt(0)
+	v_perm_b32 v64, v19, v21, s11
+	v_perm_b32 v65, v23, v25, s11
+	v_perm_b32 v66, v27, v29, s11
+	v_perm_b32 v67, v31, v33, s11
+.LBB0_12:                               ; =>This Inner Loop Header: Depth=1
+	.loc	1 0 22 is_stmt 0                ; matmul_kernel.py:0:22
+	v_mov_b32_e32 v16, v20
+	v_mov_b32_e32 v14, v18
+	v_mov_b32_e32 v12, v24
+	v_mov_b32_e32 v10, v22
+	v_mov_b32_e32 v8, v28
+	v_mov_b32_e32 v6, v26
+	v_mov_b32_e32 v4, v32
+	v_mov_b32_e32 v2, v30
+	v_mov_b32_e32 v3, v31
+	v_mov_b32_e32 v5, v33
+	v_mov_b32_e32 v7, v27
+	v_mov_b32_e32 v9, v29
+	v_mov_b32_e32 v11, v23
+	v_mov_b32_e32 v13, v25
+	v_mov_b32_e32 v15, v19
+	v_mov_b32_e32 v17, v21
+	; sched_barrier mask(0x00000000)
+	.loc	1 51 24 is_stmt 1               ; matmul_kernel.py:51:24
+	v_lshl_add_u64 v[18:19], v[44:45], 0, s[2:3]
+	.loc	1 56 33                         ; matmul_kernel.py:56:33
+	v_perm_b32 v30, v78, v82, s16
+	v_perm_b32 v31, v81, v78, s11
+	.loc	1 51 24                         ; matmul_kernel.py:51:24
+	global_load_dwordx4 v[82:85], v[18:19], off
+	s_waitcnt lgkmcnt(0)
+	s_barrier
+	ds_read_b128 v[18:21], v55
+	ds_read_b128 v[22:25], v55 offset:4096
+	.loc	1 56 33                         ; matmul_kernel.py:56:33
+	s_waitcnt lgkmcnt(1)
+	v_mfma_f32_16x16x16_f16 v[26:29], v[30:31], v[18:19], v[38:41]
+	s_nop 2
+	v_perm_b32 v38, v69, v80, s16
+	v_alignbit_b32 v39, v81, v69, 16
+	s_waitcnt lgkmcnt(0)
+	v_mfma_f32_16x16x16_f16 v[30:33], v[30:31], v[22:23], v[34:37]
+	s_nop 2
+	v_perm_b32 v34, v68, v77, s16
+	v_perm_b32 v35, v79, v68, s11
+	v_mfma_f32_16x16x16_f16 v[18:21], v[38:39], v[20:21], v[26:29]
+	v_perm_b32 v36, v59, v70, s16
+	v_alignbit_b32 v37, v72, v59, 16
+	v_mfma_f32_16x16x16_f16 v[22:25], v[38:39], v[24:25], v[30:33]
+	.loc	1 51 24                         ; matmul_kernel.py:51:24
+	ds_read_b128 v[26:29], v56
+	s_nop 1
+	ds_read_b128 v[30:33], v56 offset:4096
+	.loc	1 56 33                         ; matmul_kernel.py:56:33
+	s_waitcnt lgkmcnt(1)
+	v_mfma_f32_16x16x16_f16 v[18:21], v[34:35], v[26:27], v[18:21]
+	v_perm_b32 v26, v63, v76, s16
+	v_alignbit_b32 v27, v79, v63, 16
+	s_waitcnt lgkmcnt(0)
+	v_mfma_f32_16x16x16_f16 v[22:25], v[34:35], v[30:31], v[22:25]
+	v_perm_b32 v34, v62, v74, s16
+	v_perm_b32 v35, v75, v62, s11
+	v_mfma_f32_16x16x16_f16 v[18:21], v[26:27], v[28:29], v[18:21]
+	v_mfma_f32_16x16x16_f16 v[22:25], v[26:27], v[32:33], v[22:25]
+	.loc	1 51 24                         ; matmul_kernel.py:51:24
+	ds_read_b128 v[26:29], v57
+	ds_read_b128 v[30:33], v57 offset:4096
+	.loc	1 56 33                         ; matmul_kernel.py:56:33
+	s_waitcnt lgkmcnt(1)
+	v_mfma_f32_16x16x16_f16 v[18:21], v[34:35], v[26:27], v[18:21]
+	v_perm_b32 v26, v61, v73, s16
+	v_alignbit_b32 v27, v75, v61, 16
+	s_waitcnt lgkmcnt(0)
+	v_mfma_f32_16x16x16_f16 v[22:25], v[34:35], v[30:31], v[22:25]
+	v_mfma_f32_16x16x16_f16 v[18:21], v[26:27], v[28:29], v[18:21]
+	v_perm_b32 v28, v60, v71, s16
+	v_perm_b32 v29, v72, v60, s11
+	.loc	1 52 24                         ; matmul_kernel.py:52:24
+	v_lshl_add_u64 v[72:73], v[0:1], 0, s[2:3]
+	.loc	1 56 33                         ; matmul_kernel.py:56:33
+	v_mfma_f32_16x16x16_f16 v[22:25], v[26:27], v[32:33], v[22:25]
+	.loc	1 51 24                         ; matmul_kernel.py:51:24
+	ds_read_b128 v[32:35], v58
+	ds_read_b128 v[60:63], v58 offset:4096
+	.loc	1 56 33                         ; matmul_kernel.py:56:33
+	s_waitcnt lgkmcnt(1)
+	v_mfma_f32_16x16x16_f16 v[18:21], v[28:29], v[32:33], v[18:21]
+	s_waitcnt lgkmcnt(0)
+	v_mfma_f32_16x16x16_f16 v[68:71], v[28:29], v[60:61], v[22:25]
+	.loc	1 52 24                         ; matmul_kernel.py:52:24
+	global_load_dwordx4 v[30:33], v[72:73], off offset:512
+	global_load_dwordx4 v[26:29], v[72:73], off offset:576
+	s_nop 0
+	global_load_dwordx4 v[22:25], v[72:73], off offset:640
+	.loc	1 56 33                         ; matmul_kernel.py:56:33
+	v_mfma_f32_16x16x16_f16 v[38:41], v[36:37], v[34:35], v[18:21]
+	.loc	1 52 24                         ; matmul_kernel.py:52:24
+	s_nop 2
+	global_load_dwordx4 v[18:21], v[72:73], off offset:704
+	.loc	1 56 33                         ; matmul_kernel.py:56:33
+	v_mfma_f32_16x16x16_f16 v[34:37], v[36:37], v[62:63], v[68:71]
+	.loc	1 51 24                         ; matmul_kernel.py:51:24
+	s_barrier
+	s_waitcnt vmcnt(4)
+	ds_write_b128 v47, v[82:85]
+	; sched_barrier mask(0x00000000)
+	.loc	1 49 22                         ; matmul_kernel.py:49:22
+	s_add_u32 s2, s2, 0x100
+	s_addc_u32 s3, s3, 0
+	s_add_i32 s12, s12, -1
+	s_add_u32 s4, s14, s2
+	s_waitcnt vmcnt(0)
+	v_perm_b32 v83, v19, v21, s11
+	v_perm_b32 v84, v23, v25, s11
+	v_perm_b32 v85, v27, v29, s11
+	v_perm_b32 v86, v31, v33, s11
+	s_addc_u32 s5, s15, s3
+	v_alignbit_b32 v59, v17, v16, 16
+	v_alignbit_b32 v60, v15, v14, 16
+	v_alignbit_b32 v61, v13, v12, 16
+	v_alignbit_b32 v62, v11, v10, 16
+	v_alignbit_b32 v63, v9, v8, 16
+	v_alignbit_b32 v68, v7, v6, 16
+	v_alignbit_b32 v69, v5, v4, 16
+	v_alignbit_b32 v78, v3, v2, 16
+	v_mov_b32_e32 v70, v16
+	v_mov_b32_e32 v71, v14
+	v_mov_b32_e32 v73, v12
+	v_mov_b32_e32 v74, v10
+	v_mov_b32_e32 v76, v8
+	v_mov_b32_e32 v77, v6
+	v_mov_b32_e32 v80, v4
+	v_mov_b32_e32 v82, v2
+	v_mov_b32_e32 v72, v64
+	v_mov_b32_e32 v75, v65
+	v_mov_b32_e32 v79, v66
+	v_mov_b32_e32 v81, v67
+	v_mov_b32_e32 v64, v83
+	v_mov_b32_e32 v65, v84
+	v_mov_b32_e32 v66, v85
+	s_cmp_lg_u32 s12, 0
+	v_mov_b32_e32 v67, v86
+	s_cbranch_scc1 .LBB0_12
+; %bb.13:                               ; %Flow
+	.loc	1 0 22 is_stmt 0                ; matmul_kernel.py:0:22
+	s_mov_b64 s[14:15], s[4:5]
+	s_branch .LBB0_15
+.LBB0_14:
+	v_mov_b32_e32 v36, 0
+	v_mov_b32_e32 v35, 0
+	v_mov_b32_e32 v34, 0
+	v_mov_b32_e32 v41, 0
+	v_mov_b32_e32 v40, 0
+	v_mov_b32_e32 v39, 0
+	v_mov_b32_e32 v38, 0
+.LBB0_15:                               ; %._crit_edge
+	.loc	1 51 24 is_stmt 1               ; matmul_kernel.py:51:24
+	v_lshl_add_u64 v[0:1], v[42:43], 1, s[14:15]
+	global_load_dwordx4 v[42:45], v[0:1], off offset:256
+	.loc	1 56 33                         ; matmul_kernel.py:56:33
+	s_and_b64 vcc, exec, s[0:1]
+	.loc	1 51 24                         ; matmul_kernel.py:51:24
+	s_waitcnt lgkmcnt(0)
+	s_barrier
+	.loc	1 56 33                         ; matmul_kernel.py:56:33
+	s_cbranch_vccnz .LBB0_17
+; %bb.16:
+	.loc	1 51 24                         ; matmul_kernel.py:51:24
+	v_xor_b32_e32 v0, v46, v53
+	v_or_b32_e32 v0, v0, v54
+	v_lshl_add_u32 v46, v0, 1, 0
+	ds_read_b128 v[56:59], v46
+	ds_read_b128 v[60:63], v46 offset:4096
+	.loc	1 56 33                         ; matmul_kernel.py:56:33
+	s_waitcnt lgkmcnt(1)
+	v_mfma_f32_16x16x16_f16 v[38:41], v[2:3], v[56:57], v[38:41]
+	s_waitcnt lgkmcnt(0)
+	v_mfma_f32_16x16x16_f16 v[0:3], v[2:3], v[60:61], v[34:37]
+	.loc	1 51 24                         ; matmul_kernel.py:51:24
+	s_nop 2
+	v_xor_b32_e32 v34, v52, v53
+	v_or_b32_e32 v34, v34, v54
+	v_lshl_add_u32 v52, v34, 1, 0
+	.loc	1 56 33                         ; matmul_kernel.py:56:33
+	v_mfma_f32_16x16x16_f16 v[34:37], v[4:5], v[58:59], v[38:41]
+	.loc	1 51 24                         ; matmul_kernel.py:51:24
+	s_nop 2
+	ds_read_b128 v[38:41], v52
+	.loc	1 56 33                         ; matmul_kernel.py:56:33
+	s_waitcnt lgkmcnt(0)
+	v_mfma_f32_16x16x16_f16 v[34:37], v[6:7], v[38:39], v[34:37]
+	.loc	1 51 24                         ; matmul_kernel.py:51:24
+	v_xor_b32_e32 v38, v51, v53
+	v_or_b32_e32 v38, v38, v54
+	v_lshl_add_u32 v51, v38, 1, 0
+	.loc	1 56 33                         ; matmul_kernel.py:56:33
+	v_mfma_f32_16x16x16_f16 v[34:37], v[8:9], v[40:41], v[34:37]
+	.loc	1 51 24                         ; matmul_kernel.py:51:24
+	ds_read_b128 v[38:41], v51
+	.loc	1 56 33                         ; matmul_kernel.py:56:33
+	s_waitcnt lgkmcnt(0)
+	v_mfma_f32_16x16x16_f16 v[34:37], v[10:11], v[38:39], v[34:37]
+	.loc	1 51 24                         ; matmul_kernel.py:51:24
+	v_xor_b32_e32 v38, v50, v53
+	v_or_b32_e32 v38, v38, v54
+	v_lshl_add_u32 v50, v38, 1, 0
+	.loc	1 56 33                         ; matmul_kernel.py:56:33
+	v_mfma_f32_16x16x16_f16 v[34:37], v[12:13], v[40:41], v[34:37]
+	.loc	1 51 24                         ; matmul_kernel.py:51:24
+	ds_read_b128 v[38:41], v50
+	.loc	1 56 33                         ; matmul_kernel.py:56:33
+	s_waitcnt lgkmcnt(0)
+	v_mfma_f32_16x16x16_f16 v[34:37], v[14:15], v[38:39], v[34:37]
+	v_mfma_f32_16x16x16_f16 v[34:37], v[16:17], v[40:41], v[34:37]
+	.loc	1 51 24                         ; matmul_kernel.py:51:24
+	ds_read_b128 v[38:41], v52 offset:4096
+	.loc	1 56 33                         ; matmul_kernel.py:56:33
+	v_mfma_f32_16x16x16_f16 v[0:3], v[4:5], v[62:63], v[0:3]
+	s_waitcnt lgkmcnt(0)
+	v_mfma_f32_16x16x16_f16 v[0:3], v[6:7], v[38:39], v[0:3]
+	.loc	1 51 24                         ; matmul_kernel.py:51:24
+	ds_read_b128 v[4:7], v51 offset:4096
+	.loc	1 56 33                         ; matmul_kernel.py:56:33
+	v_mfma_f32_16x16x16_f16 v[0:3], v[8:9], v[40:41], v[0:3]
+	s_waitcnt lgkmcnt(0)
+	v_mfma_f32_16x16x16_f16 v[0:3], v[10:11], v[4:5], v[0:3]
+	v_mfma_f32_16x16x16_f16 v[0:3], v[12:13], v[6:7], v[0:3]
+	.loc	1 51 24                         ; matmul_kernel.py:51:24
+	ds_read_b128 v[4:7], v50 offset:4096
+	s_waitcnt lgkmcnt(0)
+	s_barrier
+	.loc	1 56 33                         ; matmul_kernel.py:56:33
+	v_mfma_f32_16x16x16_f16 v[0:3], v[14:15], v[4:5], v[0:3]
+	.loc	1 51 24                         ; matmul_kernel.py:51:24
+	s_waitcnt vmcnt(0)
+	ds_write_b128 v47, v[42:45]
+	s_waitcnt lgkmcnt(0)
+	.loc	1 56 33                         ; matmul_kernel.py:56:33
+	v_mfma_f32_16x16x16_f16 v[0:3], v[16:17], v[6:7], v[0:3]
+	.loc	1 51 24                         ; matmul_kernel.py:51:24
+	s_barrier
+	ds_read_b128 v[4:7], v46
+	ds_read_b128 v[8:11], v46 offset:4096
+	.loc	1 56 33                         ; matmul_kernel.py:56:33
+	s_waitcnt lgkmcnt(1)
+	v_mfma_f32_16x16x16_f16 v[12:15], v[30:31], v[4:5], v[34:37]
+	s_waitcnt lgkmcnt(0)
+	v_mfma_f32_16x16x16_f16 v[0:3], v[30:31], v[8:9], v[0:3]
+	v_mfma_f32_16x16x16_f16 v[4:7], v[32:33], v[6:7], v[12:15]
+	.loc	1 51 24                         ; matmul_kernel.py:51:24
+	s_nop 3
+	ds_read_b128 v[12:15], v52
+	ds_read_b128 v[34:37], v52 offset:4096
+	.loc	1 56 33                         ; matmul_kernel.py:56:33
+	v_mfma_f32_16x16x16_f16 v[0:3], v[32:33], v[10:11], v[0:3]
+	s_waitcnt lgkmcnt(1)
+	v_mfma_f32_16x16x16_f16 v[4:7], v[26:27], v[12:13], v[4:7]
+	s_waitcnt lgkmcnt(0)
+	v_mfma_f32_16x16x16_f16 v[0:3], v[26:27], v[34:35], v[0:3]
+	v_mfma_f32_16x16x16_f16 v[4:7], v[28:29], v[14:15], v[4:7]
+	.loc	1 51 24                         ; matmul_kernel.py:51:24
+	ds_read_b128 v[12:15], v51
+	ds_read_b128 v[42:45], v51 offset:4096
+	.loc	1 56 33                         ; matmul_kernel.py:56:33
+	v_mfma_f32_16x16x16_f16 v[0:3], v[28:29], v[36:37], v[0:3]
+	s_waitcnt lgkmcnt(1)
+	v_mfma_f32_16x16x16_f16 v[4:7], v[22:23], v[12:13], v[4:7]
+	s_waitcnt lgkmcnt(0)
+	v_mfma_f32_16x16x16_f16 v[0:3], v[22:23], v[42:43], v[0:3]
+	v_mfma_f32_16x16x16_f16 v[4:7], v[24:25], v[14:15], v[4:7]
+	.loc	1 51 24                         ; matmul_kernel.py:51:24
+	ds_read_b128 v[12:15], v50
+	ds_read_b128 v[50:53], v50 offset:4096
+	.loc	1 56 33                         ; matmul_kernel.py:56:33
+	v_mfma_f32_16x16x16_f16 v[0:3], v[24:25], v[44:45], v[0:3]
+	s_waitcnt lgkmcnt(1)
+	v_mfma_f32_16x16x16_f16 v[4:7], v[18:19], v[12:13], v[4:7]
+	s_waitcnt lgkmcnt(0)
+	v_mfma_f32_16x16x16_f16 v[0:3], v[18:19], v[50:51], v[0:3]
+	v_mfma_f32_16x16x16_f16 v[38:41], v[20:21], v[14:15], v[4:7]
+	v_mfma_f32_16x16x16_f16 v[34:37], v[20:21], v[52:53], v[0:3]
+.LBB0_17:                               ; %._crit_edge._crit_edge
+	.loc	1 64 21                         ; matmul_kernel.py:64:21
+	s_mul_i32 s0, s28, s13
+	s_ashr_i32 s1, s0, 31
+	s_lshl_b64 s[0:1], s[0:1], 1
+	s_add_u32 s2, s6, s0
+	s_addc_u32 s3, s7, s1
+	.loc	1 64 52 is_stmt 0               ; matmul_kernel.py:64:52
+	s_ashr_i32 s11, s10, 31
+	.loc	1 37 30 is_stmt 1               ; matmul_kernel.py:37:30
+	v_and_b32_e32 v1, 0x7c, v49
+	.loc	1 64 52                         ; matmul_kernel.py:64:52
+	s_lshl_b64 s[0:1], s[10:11], 1
+	.loc	1 41 38                         ; matmul_kernel.py:41:38
+	v_or_b32_e32 v2, s10, v1
+	.loc	1 40 38                         ; matmul_kernel.py:40:38
+	v_or_b32_e32 v3, s28, v48
+	.loc	1 64 52                         ; matmul_kernel.py:64:52
+	s_add_u32 s2, s2, s0
+	s_addc_u32 s3, s3, s1
+	.loc	1 65 33                         ; matmul_kernel.py:65:33
+	v_cmp_gt_i32_e64 s[0:1], s8, v3
+	.loc	1 65 58 is_stmt 0               ; matmul_kernel.py:65:58
+	v_cmp_gt_i32_e32 vcc, s9, v2
+	.loc	1 67 25 is_stmt 1               ; matmul_kernel.py:67:25
+	v_lshlrev_b32_e32 v2, 1, v1
+	v_mov_b32_e32 v3, 0
+	.loc	1 64 21                         ; matmul_kernel.py:64:21
+	v_mul_lo_u32 v0, s13, v48
+	.loc	1 65 39                         ; matmul_kernel.py:65:39
+	s_and_b64 s[4:5], s[0:1], vcc
+	.loc	1 67 25                         ; matmul_kernel.py:67:25
+	v_lshl_add_u64 v[2:3], s[2:3], 0, v[2:3]
+	s_and_saveexec_b64 s[0:1], s[4:5]
+	s_cbranch_execz .LBB0_19
+; %bb.18:                               ; %cond.store
+	.loc	1 59 23                         ; matmul_kernel.py:59:23
+	v_cvt_f16_f32_e32 v6, v38
+	v_cvt_f16_f32_e32 v7, v40
+	v_cvt_f16_f32_e32 v8, v41
+	v_cvt_f16_f32_e32 v9, v39
+	.loc	1 64 21                         ; matmul_kernel.py:64:21
+	v_ashrrev_i32_e32 v1, 31, v0
+	.loc	1 67 25                         ; matmul_kernel.py:67:25
+	v_lshl_add_u64 v[4:5], v[0:1], 1, v[2:3]
+	v_pack_b32_f16 v7, v7, v8
+	v_pack_b32_f16 v6, v6, v9
+	global_store_dwordx2 v[4:5], v[6:7], off
+.LBB0_19:
+	.loc	1 0 25 is_stmt 0                ; matmul_kernel.py:0:25
+	s_or_b64 exec, exec, s[0:1]
+	.loc	1 40 38 is_stmt 1               ; matmul_kernel.py:40:38
+	v_or3_b32 v1, v48, s28, 16
+	.loc	1 65 33                         ; matmul_kernel.py:65:33
+	v_cmp_gt_i32_e64 s[0:1], s8, v1
+	.loc	1 65 39 is_stmt 0               ; matmul_kernel.py:65:39
+	s_and_b64 s[0:1], s[0:1], vcc
+	.loc	1 67 25 is_stmt 1               ; matmul_kernel.py:67:25
+	s_and_saveexec_b64 s[2:3], s[0:1]
+	s_cbranch_execz .LBB0_21
+; %bb.20:                               ; %cond.store66
+	.loc	1 59 23                         ; matmul_kernel.py:59:23
+	v_cvt_f16_f32_e32 v1, v34
+	v_cvt_f16_f32_e32 v4, v36
+	v_cvt_f16_f32_e32 v5, v37
+	v_cvt_f16_f32_e32 v6, v35
+	.loc	1 64 21                         ; matmul_kernel.py:64:21
+	v_lshl_add_u32 v0, s13, 4, v0
+	.loc	1 67 25                         ; matmul_kernel.py:67:25
+	v_pack_b32_f16 v5, v4, v5
+	v_pack_b32_f16 v4, v1, v6
+	.loc	1 64 21                         ; matmul_kernel.py:64:21
+	v_ashrrev_i32_e32 v1, 31, v0
+	.loc	1 67 25                         ; matmul_kernel.py:67:25
+	v_lshl_add_u64 v[0:1], v[0:1], 1, v[2:3]
+	global_store_dwordx2 v[0:1], v[4:5], off
+.LBB0_21:
+	.loc	1 66 4                          ; matmul_kernel.py:66:4
+	s_endpgm
+.Ltmp6:
+	.section	.rodata,"a",@progbits
+	.p2align	6, 0x0
+	.amdhsa_kernel matmul_kernel
+		.amdhsa_group_segment_fixed_size 0
+		.amdhsa_private_segment_fixed_size 0
+		.amdhsa_kernarg_size 52
+		.amdhsa_user_sgpr_count 15
+		.amdhsa_user_sgpr_dispatch_ptr 0
+		.amdhsa_user_sgpr_queue_ptr 0
+		.amdhsa_user_sgpr_kernarg_segment_ptr 1
+		.amdhsa_user_sgpr_dispatch_id 0
+		.amdhsa_user_sgpr_kernarg_preload_length 13
+		.amdhsa_user_sgpr_kernarg_preload_offset 0
+		.amdhsa_user_sgpr_private_segment_size 0
+		.amdhsa_enable_private_segment 0
+		.amdhsa_system_sgpr_workgroup_id_x 1
+		.amdhsa_system_sgpr_workgroup_id_y 0
+		.amdhsa_system_sgpr_workgroup_id_z 0
+		.amdhsa_system_sgpr_workgroup_info 0
+		.amdhsa_system_vgpr_workitem_id 0
+		.amdhsa_next_free_vgpr 87
+		.amdhsa_next_free_sgpr 29
+		.amdhsa_accum_offset 88
+		.amdhsa_reserve_vcc 1
+		.amdhsa_reserve_xnack_mask 1
+		.amdhsa_float_round_mode_32 0
+		.amdhsa_float_round_mode_16_64 0
+		.amdhsa_float_denorm_mode_32 3
+		.amdhsa_float_denorm_mode_16_64 3
+		.amdhsa_dx10_clamp 1
+		.amdhsa_ieee_mode 1
+		.amdhsa_fp16_overflow 0
+		.amdhsa_tg_split 0
+		.amdhsa_exception_fp_ieee_invalid_op 0
+		.amdhsa_exception_fp_denorm_src 0
+		.amdhsa_exception_fp_ieee_div_zero 0
+		.amdhsa_exception_fp_ieee_overflow 0
+		.amdhsa_exception_fp_ieee_underflow 0
+		.amdhsa_exception_fp_ieee_inexact 0
+		.amdhsa_exception_int_div_zero 0
+	.end_amdhsa_kernel
+	.text
+.Lfunc_end0:
+	.size	matmul_kernel, .Lfunc_end0-matmul_kernel
+	.cfi_endproc
+                                        ; -- End function
+	.set matmul_kernel.num_vgpr, 87
+	.set matmul_kernel.num_agpr, 0
+	.set matmul_kernel.numbered_sgpr, 29
+	.set matmul_kernel.private_seg_size, 0
+	.set matmul_kernel.uses_vcc, 1
+	.set matmul_kernel.uses_flat_scratch, 0
+	.set matmul_kernel.has_dyn_sized_stack, 0
+	.set matmul_kernel.has_recursion, 0
+	.set matmul_kernel.has_indirect_call, 0
+	.section	.AMDGPU.csdata,"",@progbits
+; Kernel info:
+; codeLenInByte = 2576
+; TotalNumSgprs: 35
+; NumVgprs: 87
+; NumAgprs: 0
+; TotalNumVgprs: 87
+; ScratchSize: 0
+; MemoryBound: 0
+; FloatMode: 240
+; IeeeMode: 1
+; LDSByteSize: 0 bytes/workgroup (compile time only)
+; SGPRBlocks: 4
+; VGPRBlocks: 10
+; NumSGPRsForWavesPerEU: 35
+; NumVGPRsForWavesPerEU: 87
+; AccumOffset: 88
+; Occupancy: 5
+; WaveLimiterHint : 0
+; COMPUTE_PGM_RSRC2:SCRATCH_EN: 0
+; COMPUTE_PGM_RSRC2:USER_SGPR: 15
+; COMPUTE_PGM_RSRC2:TRAP_HANDLER: 0
+; COMPUTE_PGM_RSRC2:TGID_X_EN: 1
+; COMPUTE_PGM_RSRC2:TGID_Y_EN: 0
+; COMPUTE_PGM_RSRC2:TGID_Z_EN: 0
+; COMPUTE_PGM_RSRC2:TIDIG_COMP_CNT: 0
+; COMPUTE_PGM_RSRC3_GFX90A:ACCUM_OFFSET: 21
+; COMPUTE_PGM_RSRC3_GFX90A:TG_SPLIT: 0
+	.text
+	.p2alignl 6, 3212836864
+	.fill 256, 4, 3212836864
+	.section	.AMDGPU.gpr_maximums,"",@progbits
+	.set amdgpu.max_num_vgpr, 0
+	.set amdgpu.max_num_agpr, 0
+	.set amdgpu.max_num_sgpr, 0
+	.text
+	.section	.debug_abbrev,"",@progbits
+	.byte	1                               ; Abbreviation Code
+	.byte	17                              ; DW_TAG_compile_unit
+	.byte	1                               ; DW_CHILDREN_yes
+	.byte	37                              ; DW_AT_producer
+	.byte	14                              ; DW_FORM_strp
+	.byte	19                              ; DW_AT_language
+	.byte	5                               ; DW_FORM_data2
+	.byte	3                               ; DW_AT_name
+	.byte	14                              ; DW_FORM_strp
+	.byte	16                              ; DW_AT_stmt_list
+	.byte	23                              ; DW_FORM_sec_offset
+	.byte	27                              ; DW_AT_comp_dir
+	.byte	14                              ; DW_FORM_strp
+	.byte	17                              ; DW_AT_low_pc
+	.byte	1                               ; DW_FORM_addr
+	.byte	18                              ; DW_AT_high_pc
+	.byte	6                               ; DW_FORM_data4
+	.byte	0                               ; EOM(1)
+	.byte	0                               ; EOM(2)
+	.byte	2                               ; Abbreviation Code
+	.byte	46                              ; DW_TAG_subprogram
+	.byte	0                               ; DW_CHILDREN_no
+	.byte	3                               ; DW_AT_name
+	.byte	14                              ; DW_FORM_strp
+	.byte	32                              ; DW_AT_inline
+	.byte	11                              ; DW_FORM_data1
+	.byte	0                               ; EOM(1)
+	.byte	0                               ; EOM(2)
+	.byte	3                               ; Abbreviation Code
+	.byte	46                              ; DW_TAG_subprogram
+	.byte	1                               ; DW_CHILDREN_yes
+	.byte	17                              ; DW_AT_low_pc
+	.byte	1                               ; DW_FORM_addr
+	.byte	18                              ; DW_AT_high_pc
+	.byte	6                               ; DW_FORM_data4
+	.byte	49                              ; DW_AT_abstract_origin
+	.byte	19                              ; DW_FORM_ref4
+	.byte	0                               ; EOM(1)
+	.byte	0                               ; EOM(2)
+	.byte	4                               ; Abbreviation Code
+	.byte	29                              ; DW_TAG_inlined_subroutine
+	.byte	0                               ; DW_CHILDREN_no
+	.byte	49                              ; DW_AT_abstract_origin
+	.byte	19                              ; DW_FORM_ref4
+	.byte	17                              ; DW_AT_low_pc
+	.byte	1                               ; DW_FORM_addr
+	.byte	18                              ; DW_AT_high_pc
+	.byte	6                               ; DW_FORM_data4
+	.byte	88                              ; DW_AT_call_file
+	.byte	11                              ; DW_FORM_data1
+	.byte	89                              ; DW_AT_call_line
+	.byte	11                              ; DW_FORM_data1
+	.byte	87                              ; DW_AT_call_column
+	.byte	11                              ; DW_FORM_data1
+	.byte	0                               ; EOM(1)
+	.byte	0                               ; EOM(2)
+	.byte	5                               ; Abbreviation Code
+	.byte	29                              ; DW_TAG_inlined_subroutine
+	.byte	0                               ; DW_CHILDREN_no
+	.byte	49                              ; DW_AT_abstract_origin
+	.byte	19                              ; DW_FORM_ref4
+	.byte	85                              ; DW_AT_ranges
+	.byte	23                              ; DW_FORM_sec_offset
+	.byte	88                              ; DW_AT_call_file
+	.byte	11                              ; DW_FORM_data1
+	.byte	89                              ; DW_AT_call_line
+	.byte	11                              ; DW_FORM_data1
+	.byte	87                              ; DW_AT_call_column
+	.byte	11                              ; DW_FORM_data1
+	.byte	0                               ; EOM(1)
+	.byte	0                               ; EOM(2)
+	.byte	0                               ; EOM(3)
+	.section	.debug_info,"",@progbits
+.Lcu_begin0:
+	.long	.Ldebug_info_end0-.Ldebug_info_start0 ; Length of Unit
+.Ldebug_info_start0:
+	.short	4                               ; DWARF version number
+	.long	.debug_abbrev                   ; Offset Into Abbrev. Section
+	.byte	8                               ; Address Size (in bytes)
+	.byte	1                               ; Abbrev [1] 0xb:0x58 DW_TAG_compile_unit
+	.long	.Linfo_string0                  ; DW_AT_producer
+	.short	2                               ; DW_AT_language
+	.long	.Linfo_string1                  ; DW_AT_name
+	.long	.Lline_table_start0             ; DW_AT_stmt_list
+	.long	.Linfo_string2                  ; DW_AT_comp_dir
+	.quad	.Lfunc_begin0                   ; DW_AT_low_pc
+	.long	.Lfunc_end0-.Lfunc_begin0       ; DW_AT_high_pc
+	.byte	2                               ; Abbrev [2] 0x2a:0x6 DW_TAG_subprogram
+	.long	.Linfo_string3                  ; DW_AT_name
+	.byte	1                               ; DW_AT_inline
+	.byte	3                               ; Abbrev [3] 0x30:0x32 DW_TAG_subprogram
+	.quad	.Lfunc_begin0                   ; DW_AT_low_pc
+	.long	.Lfunc_end0-.Lfunc_begin0       ; DW_AT_high_pc
+	.long	42                              ; DW_AT_abstract_origin
+	.byte	4                               ; Abbrev [4] 0x41:0x14 DW_TAG_inlined_subroutine
+	.long	42                              ; DW_AT_abstract_origin
+	.quad	.Ltmp0                          ; DW_AT_low_pc
+	.long	.Ltmp1-.Ltmp0                   ; DW_AT_high_pc
+	.byte	1                               ; DW_AT_call_file
+	.byte	13                              ; DW_AT_call_line
+	.byte	27                              ; DW_AT_call_column
+	.byte	5                               ; Abbrev [5] 0x55:0xc DW_TAG_inlined_subroutine
+	.long	42                              ; DW_AT_abstract_origin
+	.long	.Ldebug_ranges0                 ; DW_AT_ranges
+	.byte	1                               ; DW_AT_call_file
+	.byte	49                              ; DW_AT_call_line
+	.byte	33                              ; DW_AT_call_column
+	.byte	0                               ; End Of Children Mark
+	.byte	0                               ; End Of Children Mark
+.Ldebug_info_end0:
+	.section	.debug_ranges,"",@progbits
+.Ldebug_ranges0:
+	.quad	.Ltmp2-.Lfunc_begin0
+	.quad	.Ltmp3-.Lfunc_begin0
+	.quad	.Ltmp4-.Lfunc_begin0
+	.quad	.Ltmp5-.Lfunc_begin0
+	.quad	0
+	.quad	0
+	.section	.debug_str,"MS",@progbits,1
+.Linfo_string0:
+	.asciz	"triton"                        ; string offset=0
+.Linfo_string1:
+	.asciz	"matmul_kernel.py"              ; string offset=7
+.Linfo_string2:
+	.asciz	"/AMD-triton/python/perf-kernels/tools/tune_gemm" ; string offset=24
+.Linfo_string3:
+	.asciz	"matmul_kernel"                 ; string offset=72
+	.section	".note.GNU-stack","",@progbits
+	.amdgpu_metadata
+---
+amdhsa.kernels:
+  - .agpr_count:     0
+    .args:
+      - .address_space:  global
+        .offset:         0
+        .size:           8
+        .value_kind:     global_buffer
+      - .address_space:  global
+        .offset:         8
+        .size:           8
+        .value_kind:     global_buffer
+      - .address_space:  global
+        .offset:         16
+        .size:           8
+        .value_kind:     global_buffer
+      - .offset:         24
+        .size:           4
+        .value_kind:     by_value
+      - .offset:         28
+        .size:           4
+        .value_kind:     by_value
+      - .offset:         32
+        .size:           4
+        .value_kind:     by_value
+      - .offset:         36
+        .size:           4
+        .value_kind:     by_value
+      - .offset:         40
+        .size:           4
+        .value_kind:     by_value
+      - .offset:         44
+        .size:           4
+        .value_kind:     by_value
+      - .offset:         48
+        .size:           4
+        .value_kind:     by_value
+    .group_segment_fixed_size: 0
+    .kernarg_segment_align: 8
+    .kernarg_segment_size: 52
+    .max_flat_workgroup_size: 512
+    .name:           matmul_kernel
+    .private_segment_fixed_size: 0
+    .sgpr_count:     35
+    .sgpr_spill_count: 0
+    .symbol:         matmul_kernel.kd
+    .vgpr_count:     87
+    .vgpr_spill_count: 0
+    .wavefront_size: 64
+amdhsa.target:   amdgcn-amd-amdhsa--gfx942
+amdhsa.version:
+  - 1
+  - 1
+...
+
+	.end_amdgpu_metadata
+	.section	.debug_line,"",@progbits
+.Lline_table_start0:
