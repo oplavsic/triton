@@ -115,8 +115,6 @@ struct TritonAMDGPUBypassLDSForDotOperandPass
     ModuleOp module = getOperation();
     auto convertOps = collectConvertOps(module);
 
-    module.dump();
-
     for (ttg::ConvertLayoutOp &convertOp : convertOps) {
       auto loadInsts = getAllLoadOpsReachingOp(convertOp, module);
       assert(!loadInsts.empty());
@@ -126,7 +124,7 @@ struct TritonAMDGPUBypassLDSForDotOperandPass
         auto loadType =
             dyn_cast<RankedTensorType>(loadInst.getResult().getType());
         if (!loadType)
-          return;
+          continue;
 
         auto dstType = llvm::cast<RankedTensorType>(convertOp.getType());
         auto dstDotOp =
