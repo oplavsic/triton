@@ -249,15 +249,15 @@ SmallVector<unsigned> getMatrixOrder(unsigned rank, bool rowMajor) {
 }
 
 SmallVector<unsigned> getOrderForDotOperand(unsigned opIdx, unsigned rank,
-                                            bool kMajor) {
-  // kMajor: if true, the matrix is fastest-running on k,
+                                            bool kMinor) {
+  // kMinor: if true, the matrix is fastest-running on k,
   //         otherwise it is on m (resp. n)
   // opIdx=0: [batch, m, k] if rank == 3 else [m, k]
   // opIdx=1: [batch, k, n] if rank == 3 else [k, n]
   // batch (if rank == 3) is always the slowest running dimension
   assert(rank == 2 || rank == 3);
   assert(opIdx == 0 || opIdx == 1);
-  auto rowMajor = bool(opIdx) != kMajor;
+  auto rowMajor = bool(opIdx) != kMinor;
   return getMatrixOrder(rank, rowMajor);
 }
 
@@ -290,7 +290,7 @@ SmallVector<unsigned> getOrder(Attribute layout) {
   }
   if (auto dotLayout = dyn_cast<DotOperandEncodingAttr>(layout)) {
     auto rank = dotLayout.getWarpsPerCTA().size();
-    return getOrderForDotOperand(dotLayout.getOpIdx(), rank, /*kMajor*/ true);
+    return getOrderForDotOperand(dotLayout.getOpIdx(), rank, /*kMinor*/ true);
   }
   if (auto sliceLayout = dyn_cast<SliceEncodingAttr>(layout)) {
     SmallVector<unsigned> parentOrder = getOrder(sliceLayout.getParent());
@@ -1040,7 +1040,7 @@ SmallVector<unsigned> DotOperandEncodingAttr::getWarpOrder() const {
 }
 SmallVector<unsigned> DotOperandEncodingAttr::getThreadOrder() const {
   return getOrderForDotOperand(getOpIdx(), getWarpsPerCTA().size(),
-                               /*kMajor*/ true);
+                               /*kMinor*/ true);
 }
 SmallVector<unsigned> DotOperandEncodingAttr::getShapePerCTATile(
     ArrayRef<int64_t> tensorShape) const {
@@ -1665,7 +1665,7 @@ SmallVector<unsigned> AMDMfmaEncodingAttr::getRepOrder() const {
 SmallVector<unsigned>
 AMDMfmaEncodingAttr::getRepOrderForOperand(int opIdx) const {
   auto rank = getWarpsPerCTA().size();
-  return getOrderForDotOperand(opIdx, rank, /*kMajor*/ true);
+  return getOrderForDotOperand(opIdx, rank, /*kMinor*/ true);
 }
 
 SmallVector<int64_t>
@@ -1759,7 +1759,7 @@ SmallVector<unsigned> AMDWmmaEncodingAttr::getRepOrder() const {
 SmallVector<unsigned>
 AMDWmmaEncodingAttr::getRepOrderForOperand(int opIdx) const {
   auto rank = getWarpsPerCTA().size();
-  return getOrderForDotOperand(opIdx, rank, /*kMajor*/ true);
+  return getOrderForDotOperand(opIdx, rank, /*kMinor*/ true);
 }
 
 SmallVector<unsigned> AMDWmmaEncodingAttr::getCTAsPerCGA() const {
@@ -1969,7 +1969,7 @@ NvidiaMmaEncodingAttr::getShapePerCTATile(ArrayRef<int64_t> tensorShape) const {
 SmallVector<unsigned>
 NvidiaMmaEncodingAttr::getRepOrderForOperand(int opIdx) const {
   auto rank = getWarpsPerCTA().size();
-  return getOrderForDotOperand(opIdx, rank, /*kMajor*/ true);
+  return getOrderForDotOperand(opIdx, rank, /*kMinor*/ true);
 }
 
 SmallVector<int64_t>
