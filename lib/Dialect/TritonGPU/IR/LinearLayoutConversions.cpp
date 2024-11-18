@@ -875,16 +875,16 @@ LinearLayout ampereDotToLinearLayout(ArrayRef<int64_t> shape,
 
   MLIRContext *ctx = mma.getContext();
 
-  // The A and B operands are tiled in a kMinor fashion
-  auto kMinorOrder = dot.getRepOrder();
-  assert(kMinorOrder ==
-         getOrderForDotOperand(dot.getOpIdx(), rank, /*kMinor=*/true));
+  // The A and B operands are tiled in a kContig fashion
+  auto kContigOrder = dot.getRepOrder();
+  assert(kContigOrder ==
+         getOrderForDotOperand(dot.getOpIdx(), rank, /*kContig=*/true));
 
-  auto kMinorDims =
-      permuteDimNames(standardOutDimNames(ctx, rank), kMinorOrder);
+  auto kContigDims =
+      permuteDimNames(standardOutDimNames(ctx, rank), kContigOrder);
   // This agrees with the order of the elements, which means that we can share
   // the code below for both A and B without having to perform any swaps
-  assert(getOrder(dot) == kMinorOrder);
+  assert(getOrder(dot) == kContigOrder);
 
   std::vector<std::vector<int32_t>> registers;
   std::vector<std::vector<int32_t>> lanes;
@@ -911,7 +911,7 @@ LinearLayout ampereDotToLinearLayout(ArrayRef<int64_t> shape,
   registers.push_back({i, 0});
 
   LinearLayout ctaLayout({{S("register"), registers}, {S("lane"), lanes}},
-                         ArrayRef(kMinorDims).take_front(2));
+                         ArrayRef(kContigDims).take_front(2));
 
   // Let warpsPerCTAMma = {2, 2}, then
   // warpsPerCTA = {2, 1} for opA and warpsPerCTA = {1, 2} for opB
@@ -952,7 +952,7 @@ LinearLayout ampereDotToLinearLayout(ArrayRef<int64_t> shape,
     }
   }
 
-  ctaLayout *= LinearLayout({{S("warp"), warps}}, kMinorDims);
+  ctaLayout *= LinearLayout({{S("warp"), warps}}, kContigDims);
 
   return combineCtaCgaWithShape(ctaLayout, getCTALayout(dot), shape);
 }

@@ -76,7 +76,7 @@ Value computeBasePtr(ConversionPatternRewriter &rewriter, Location loc,
   return base;
 }
 
-bool isKMinor(llvm::ArrayRef<unsigned> order, int opIdx) {
+bool isKContig(llvm::ArrayRef<unsigned> order, int opIdx) {
   auto rank = order.size();
   int kdim = opIdx == 0 ? rank - 1 : rank - 2;
   return order[0] == kdim;
@@ -106,9 +106,9 @@ bool isSwizzlePatternFitsIntoBlock(const SharedEncodingAttr sharedLayout,
   const auto swizzleSlowDimSize =
       sharedLayout.getMaxPhase() * sharedLayout.getPerPhase();
   const auto swizzlePatternSizeK =
-      isKMinor(order, opIdx) ? swizzleFastDimSize : swizzleSlowDimSize;
+      isKContig(order, opIdx) ? swizzleFastDimSize : swizzleSlowDimSize;
   const auto swizzlePatternSizeNonK =
-      !isKMinor(order, opIdx) ? swizzleFastDimSize : swizzleSlowDimSize;
+      !isKContig(order, opIdx) ? swizzleFastDimSize : swizzleSlowDimSize;
 
   const auto blockSizeK = mfmaInstrK * reps[reps.size() - 1];
   const auto blockSizeNonK = mfmaInstrNonK * warpsPerBlockNonK;

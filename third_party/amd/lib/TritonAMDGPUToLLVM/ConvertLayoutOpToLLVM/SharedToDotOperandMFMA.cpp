@@ -279,7 +279,7 @@ Value convertLayout(int opIdx, ConversionPatternRewriter &rewriter,
   SmallVector<Value> offsets;
   Value smemBase;
   bool isFastPath =
-      !AMD::isKMinor(order, opIdx) && !hasSwizzleEnabled(sharedLayout);
+      !AMD::isKContig(order, opIdx) && !hasSwizzleEnabled(sharedLayout);
   if (isFastPath) {
     // fast path handles tensors that are not k-major and have swizzling
     // disabled, in which case offsets computation can be simplified
