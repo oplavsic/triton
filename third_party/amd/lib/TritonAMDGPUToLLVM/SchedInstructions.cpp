@@ -462,6 +462,27 @@ struct InstructionSchedHintsRewriter
       createSchedBarrier(rewriter, loc,
                          mlir::amdgpu::sched_barrier_opt_enum::none);
 
+    /*
+    // Try to schedule ds_write and mfma
+    createSchedGroupBarrier(rewriter, loc, InstructionKindMask::VMEM_READ, 4, 0);
+    // barrier
+    createSchedGroupBarrier(rewriter, loc, InstructionKindMask::DS_READ, 14, 0);
+    createSchedGroupBarrier(rewriter, loc, InstructionKindMask::MFMA, 51, 0);
+    createSchedGroupBarrier(rewriter, loc, InstructionKindMask::DS_READ, 3, 0);
+    createSchedGroupBarrier(rewriter, loc, InstructionKindMask::MFMA, 1, 0);
+    createSchedGroupBarrier(rewriter, loc, InstructionKindMask::DS_READ, 1, 0);
+    createSchedGroupBarrier(rewriter, loc, InstructionKindMask::MFMA, 12, 0);
+    createSchedGroupBarrier(rewriter, loc, InstructionKindMask::DS_READ, 6, 0);
+    createSchedGroupBarrier(rewriter, loc, InstructionKindMask::MFMA, 34, 0);
+    createSchedGroupBarrier(rewriter, loc, InstructionKindMask::VMEM_READ, 3, 0);
+    createSchedGroupBarrier(rewriter, loc, InstructionKindMask::MFMA, 10, 0);
+    createSchedGroupBarrier(rewriter, loc, InstructionKindMask::VMEM_READ, 1, 0);
+    // barrier
+    createSchedGroupBarrier(rewriter, loc, InstructionKindMask::MFMA, 1, 0);
+    createSchedGroupBarrier(rewriter, loc, InstructionKindMask::DS_WRITE, 8, 0);
+    createSchedGroupBarrier(rewriter, loc, InstructionKindMask::MFMA, 19, 0);
+    */
+
     rewriter.eraseOp(instructionSchedHint);
     return success();
   }
