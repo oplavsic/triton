@@ -38,22 +38,6 @@ using ::mlir::triton::gpu::SharedEncodingAttr;
 
 using ValueTable = std::map<std::array<int, 3>, Value>;
 
-void createSchedGroupBarrier(PatternRewriter &rewriter, Location loc,
-                             int32_t maskValue, int sizeValue,
-                             int groupIdValue) {
-  const char *intrinsicName = "llvm.amdgcn.sched.group.barrier";
-
-  Value mask =
-      LLVM::createConstantI32(loc, rewriter, static_cast<int32_t>(maskValue));
-  Value size =
-      LLVM::createConstantI32(loc, rewriter, static_cast<int32_t>(sizeValue));
-  Value groupId = LLVM::createConstantI32(loc, rewriter,
-                                          static_cast<int32_t>(groupIdValue));
-
-  LLVM::createLLVMIntrinsicCallOp(rewriter, loc, intrinsicName, TypeRange{},
-                                  ValueRange{mask, size, groupId});
-};
-
 struct DotOpMFMAConversionHelper {
   AMDMfmaEncodingAttr mfmaLayout;
 
@@ -251,7 +235,6 @@ struct DotOpMFMAConversionHelper {
     if (prevOp)
       setPrioOp = dyn_cast<ROCDL::SetPrioOp>(prevOp);
     Value firstMfma;
-    // assert(numRepM == 8 && "numRepM != 8");
 
     auto vecTy = vec_ty(dstElemTy, elemsPerVec);
     for (int b = 0; b < numRepB; ++b) {
@@ -284,32 +267,6 @@ struct DotOpMFMAConversionHelper {
                n * elemsPerVec + v] =
                 extract_element(dstElemTy, acc, i32_val(v));
           }
-        }
-        if (numRepM == 8 && m == 3) {
-          const char *intrinsicName = "llvm.amdgcn.sched.barrier";
-          LLVM::FastmathFlagsAttr defaultFlags{};
-
-          Value mask =
-              LLVM::createConstantI32(loc, rewriter, static_cast<int32_t>(0));
-          LLVM::createLLVMIntrinsicCallOp(rewriter, loc, intrinsicName,
-                                          TypeRange{}, ValueRange{mask});
-          createSchedGroupBarrier(rewriter, loc, 8, 8, 0);
-          createSchedGroupBarrier(rewriter, loc, 512, 1, 0);
-          createSchedGroupBarrier(rewriter, loc, 8, 7, 0);
-          createSchedGroupBarrier(rewriter, loc, 512, 1, 0);
-          createSchedGroupBarrier(rewriter, loc, 8, 7, 0);
-          createSchedGroupBarrier(rewriter, loc, 512, 1, 0);
-          createSchedGroupBarrier(rewriter, loc, 8, 7, 0);
-          createSchedGroupBarrier(rewriter, loc, 512, 1, 0);
-          createSchedGroupBarrier(rewriter, loc, 8, 7, 0);
-          createSchedGroupBarrier(rewriter, loc, 512, 1, 0);
-          createSchedGroupBarrier(rewriter, loc, 8, 7, 0);
-          createSchedGroupBarrier(rewriter, loc, 512, 1, 0);
-          createSchedGroupBarrier(rewriter, loc, 8, 7, 0);
-          createSchedGroupBarrier(rewriter, loc, 512, 1, 0);
-          createSchedGroupBarrier(rewriter, loc, 8, 7, 0);
-          createSchedGroupBarrier(rewriter, loc, 512, 1, 0);
-          createSchedGroupBarrier(rewriter, loc, 8, 7, 0);
         }
       }
     }

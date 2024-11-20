@@ -240,10 +240,10 @@ class HIPBackend(BaseBackend):
         passes.ttgpuir.add_optimize_dot_operands(pm, True)
         passes.ttgpuir.add_remove_layout_conversions(pm)
         passes.ttgpuir.add_reduce_data_duplication(pm)
-        if amd.has_matrix_core_feature(options.arch):
-            amd.passes.ttgpuir.add_reorder_instructions(pm)
-            #if os.getenv("TRITON_HIP_USE_BLOCK_PINGPONG") == "1" and options.num_stages == 2:
-            amd.passes.ttgpuir.add_block_pingpong(pm)
+        # if amd.has_matrix_core_feature(options.arch):
+        #     amd.passes.ttgpuir.add_reorder_instructions(pm)
+        #     if os.getenv("TRITON_HIP_USE_BLOCK_PINGPONG") == "1" and options.num_stages == 2:
+        amd.passes.ttgpuir.add_block_pingpong(pm)
 
         use_buffer_ops = os.environ.get("AMDGCN_USE_BUFFER_OPS", "0") == "1"
 
@@ -251,10 +251,11 @@ class HIPBackend(BaseBackend):
         if options.instruction_sched_variant == "local-prefetch":
             use_buffer_ops = True
 
-        if use_buffer_ops:
-            amd.passes.ttgpuir.add_canonicalize_pointers(pm)
-            passes.common.add_canonicalizer(pm)
-            amd.passes.ttgpuir.add_convert_to_buffer_ops(pm)
+        # if use_buffer_ops:
+        # amd.passes.ttgpuir.add_canonicalize_pointers(pm)
+        # passes.common.add_canonicalizer(pm)
+        # amd.passes.ttgpuir.add_convert_to_buffer_ops(pm)
+
         passes.common.add_canonicalizer(pm)
         passes.common.add_cse(pm)
         passes.common.add_symbol_dce(pm)
